@@ -16,7 +16,7 @@ int *stack_array;
 
 void init(int V){  //Inicializa a pilha V-> numero de vertices
     top = NULL;
-    stack_array = (int *)malloc(sizeof(int)*V);
+    stack_array = (int *)malloc(sizeof(int)*(V+1));
 }
 
 int is_empty(){
@@ -57,3 +57,8 @@ int belong(int value){
 int main(){
     return 0;
 }
+
+/*Nota:
+    Falta fazer verificacoes para por cenas no vetor;
+    Falta fazer free a stack;
+*/
