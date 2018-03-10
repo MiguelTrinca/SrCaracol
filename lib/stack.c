@@ -1,3 +1,8 @@
+/* 
+  This library implements an ordinary stack with linked lists with limited functionality and linear time for checking if an
+  element is in the stack. It dows so by maintaining an additional array of whether or not the element is present.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 
