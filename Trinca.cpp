@@ -39,6 +39,7 @@ public:
 		_edges_num = edges_num;
 
 		adj_list = new std::list<int>[_nodes_num+1]; //Criar o array com dimensao nodes + 1
+		nodes_array[_nodes_num + 1];
 	}
 
 	void addEdge(int beg, int end) {		
