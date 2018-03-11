@@ -3,6 +3,13 @@
 #include <string>
 #include <list>
 #include <stdio.h>
+#include <stack>
+
+class MyStack : stack{
+	bool inStack(int id){
+		return nodes_array[id].getID() == id;  //Devolve true se estiver la dentro
+	}
+};
 
 class Node {
 private:
@@ -23,6 +30,8 @@ public:
 	void setID(int id){
 		_id = id;
 	}
+
+	
 };
 
 
@@ -38,14 +47,28 @@ public:
 		_nodes_num = nodes_num;
 		_edges_num = edges_num;
 
-		adj_list = new std::list<int>[_nodes_num+1]; //Criar o array com dimensao nodes + 1
-		nodes_array[_nodes_num + 1];
+		adj_list = new std::list<int>[_nodes_num+1];//Criar o array com dimensao nodes + 1
+		nodes_array[_nodes_num + 1];				//Criar o array com dimensao nodes + 1
+
+		/*Criacao de todos os nodes quando e chamado o construtor do grafo
+		/		estamos a supor que os id dos nodes sao sequenciais ou seja
+		/		Se tivermos 3 nodes, sao 1,2 e 3. 
+		*/
+
+		for(int id = 0; id<_nodes_num+1; id++){ 
+			std::cout << "id:" << id << "\n";
+			Node n(id, 0, 0);
+			std::cout << "Criei o node" << "\n";
+			//nodes_array[id] = n;
+			//std::cout << "Deu merda?" << "\n";			
+		}
 	}
 
 	void addEdge(int beg, int end) {		
 		adj_list[beg].push_front(end);  //Criar a edge.
 		}
 	
+	/*Criacao de um node, caso o nosso postulado esteja errado*/
 	void createNode(int id){
 		if(nodes_array[id].getID() == 0){ //Quero construir quando tenho NULL
 			Node n(id, 0 , 0); //Crio o node
