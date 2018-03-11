@@ -11,24 +11,17 @@ class Node {
 private:
 	int _id = 0;
 	int _d, _low;
+	bool _in_stack;
 public:
 	Node(int id, int d, int low){
 		_id = id;
 		_d = d;
 		_low = low;
-	//	_in_stack = false; // tracks whether or not th Node is in the stack
+		_in_stack = false; // tracks whether or not th Node is in the stack
 	}
-
-	int	getID(){
-		std::cout << "my id is " << _id << "\n";
-		return _id;
-	}
-
-	void setID(int id){
-		_id = id;
-	}
-
-
+	bool inStack() { return _in_stack; }
+	void setStack(bool in_stack) { _in_stack = in_stack;	}
+	int getID() {return _id;}
 };
 
 class MyStack : public std::stack<int> {
@@ -38,8 +31,21 @@ public:
 	MyStack(Node *nod_array) { // /!\ don't know if it should be created internally or externaly
 		nodes_array = nod_array;
 	}
+
+	void push(const int id) {
+		std::stack<int>::push(id);
+		nodes_array[id].setStack(true);
+	}
+/*
+	void pop(const int id) {
+		std::stack::pop (id);
+		nodes_array[id].setStack(false);
+	} */
+
+	/* Checks if present in the stack in linear time (/!\ Hopefully)
+	 */
 	bool inStack(int id){
-		return nodes_array[id].getID() == id;  //Devolve true se estiver la dentro
+		return nodes_array[id].inStack();  //Devolve true se estiver la dentro
 	}
 };
 
@@ -84,9 +90,8 @@ public:
 
 	void listNodes() {
 		std::cout << "listing nodes" << "\n";
-		for(int id = 0; id<_nodes_num+1; id++){
+		for(int id = 0; id<_nodes_num+1; id++)
 			std::cout << nodes_array[id].getID() << "\n";
-		}
 	}
 };
 
