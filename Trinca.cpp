@@ -36,11 +36,11 @@ public:
 		std::stack<int>::push(id);
 		nodes_array[id].setStack(true);
 	}
-/*
+
 	void pop(const int id) {
-		std::stack::pop (id);
+		std::stack<int>::pop(id);
 		nodes_array[id].setStack(false);
-	} */
+	}
 
 	/* Checks if present in the stack in linear time (/!\ Hopefully)
 	 */
