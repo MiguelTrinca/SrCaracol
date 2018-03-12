@@ -4,31 +4,39 @@
 #include <list>
 #include <stdio.h>
 #include <stack>
+#include <math.h>
 
+//#define INFINITY /*implementation defined*/
+#define min(a,b) (((a)<(b))?(a):(b))
 
 
 class Node {
 private:
 	int _id = 0;
-	int _d, _low;
+	double _d, _low;
 	bool _in_stack;
 public:
-	Node(int id, int d, int low){
+	Node(int id){
 		_id = id;
-		_d = d;
-		_low = low;
+		_d = INFINITY;
+		_low = INFINITY;
 		_in_stack = false; // tracks whether or not th Node is in the stack
 	}
 	bool inStack() { return _in_stack; }
 	void setStack(bool in_stack) { _in_stack = in_stack;	}
 	int getID() {return _id;}
+
+	double get_d() {return _d;}
+	double set_d(double val) { _d = val; }
+	double get_low() {return _low;}
+	double set_low(double val) { _low = val; }
 };
 
-class MyStack : public std::stack<int> {
+class CustomStack : public std::stack<int> {
 private:
 	Node *nodes_array; //Array de nodes
 public:
-	MyStack(Node *nod_array) { // /!\ don't know if it should be created internally or externaly
+	CustomStack(Node *nod_array) { // /!\ don't know if it should be created internally or externaly
 		nodes_array = nod_array;
 	}
 
@@ -37,8 +45,8 @@ public:
 		nodes_array[id].setStack(true);
 	}
 
-	void pop(const int id) {
-		std::stack<int>::pop(id);
+	int pop(const int id) {
+		std::stack<int>::pop();
 		nodes_array[id].setStack(false);
 	}
 
@@ -53,7 +61,7 @@ public:
 class Graph {
 private:
 	int _nodes_num;
-    int _edges_num;
+  int _edges_num;
 	std::list<int> *adj_list;  //Array de listas
 	Node *nodes_array; //Array de nodes
 
@@ -62,8 +70,6 @@ public:
 		_nodes_num = nodes_num;
 		_edges_num = edges_num;
 
-		Node *empty_node = new Node(0,0,0);
-
 		adj_list = new std::list<int>[_nodes_num+1]; //Criar o array com dimensao nodes + 1
 		nodes_array[_nodes_num + 1];				//Criar o array com dimensao nodes + 1
 
@@ -71,8 +77,7 @@ public:
 		/		estamos a supor que os id dos nodes sao sequenciais ou seja
 		/		Se tivermos 3 nodes, sao 1,2 e 3.
 		*/
-		int id;
-		for(id = 0; id<_nodes_num+1; id++)
+		for(int id = 0; id<_nodes_num+1; id++)
 			createNode(id);
 	}
 
@@ -83,7 +88,7 @@ public:
 	/*Criacao de um node, caso o nosso postulado esteja errado*/
 	void createNode(int id){
 		//if(nodes_array[id].getID() == 0){ //Quero construir quando tenho NULL
-			Node *n = new Node(id, 0 , 0); //Crio o node
+			Node *n = new Node(id); //Crio o node
 			nodes_array[id] = *n;          // Meto no array
 		//}
 	}
@@ -93,6 +98,45 @@ public:
 		for(int id = 0; id<_nodes_num+1; id++)
 			std::cout << nodes_array[id].getID() << "\n";
 	}
+
+	void /*std::list<int>*/ tarjanSCC() {
+		int visited = 0;
+		CustomStack *stack = new CustomStack(nodes_array);
+		//result = new std::list<int>;
+
+		for (int id=1; id < _nodes_num+1; id++) {
+			if (nodes_array[id].get_d() == INFINITY)
+				tarjan_visit(nodes_array[id], &visited, stack);
+		}
+		//return result
+	}
+
+	void tarjan_visit(Node node, int *visited, CustomStack *stack) {
+		int id = node.getID();
+		node.set_d(*visited);
+		node.set_low(*visited);
+		(*visited)++;
+
+		stack->push(node.getID());
+
+
+ 		std::list<int>::iterator v;
+		std::list<int> neighbours = adj_list[id];
+		for (v = neighbours.begin(); v != neighbours.end(); v++) {
+			std::cout << "visiting " << *v << "\n"; // debugging
+			Node v_node = nodes_array[*v];
+			if (v_node.get_d() == INFINITY || v_node.inStack()) {
+				if (v_node.get_d() == INFINITY)
+					tarjan_visit(v_node, visited, stack);
+			v_node.set_low(min(v_node.get_low(), node.get_low()));
+			}
+		}
+		if (node.get_low() == node.get_d()) {
+			//POPOPOP
+		}
+	}
+
+
 };
 
 
@@ -112,9 +156,10 @@ int main(int argc, char** argv) {
    	g.addEdge(beg, end);
    }
 	 g.listNodes();
+	 g.tarjanSCC();
 
    std::cout << "number of nodes: " << nodes << "\n";
    std::cout << "number of edges: " << edges << "\n";
 
-    return 0;
+	 return 0;
 }
