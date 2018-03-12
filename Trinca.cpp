@@ -45,9 +45,17 @@ public:
 		nodes_array[id].setStack(true);
 	}
 
-	int pop(const int id) {
+	int pop() {
+		int id = std::stack<int>::top();
 		std::stack<int>::pop();
 		nodes_array[id].setStack(false);
+	}
+
+	Node popNode() {
+		int id = std::stack<int>::top();
+		std::stack<int>::pop();
+		nodes_array[id].setStack(false);
+		return nodes_array[id];
 	}
 
 	/* Checks if present in the stack in linear time (/!\ Hopefully)
@@ -119,20 +127,22 @@ public:
 
 		stack->push(node.getID());
 
-
+		Node *v_node;
  		std::list<int>::iterator v;
 		std::list<int> neighbours = adj_list[id];
 		for (v = neighbours.begin(); v != neighbours.end(); v++) {
 			std::cout << "visiting " << *v << "\n"; // debugging
-			Node v_node = nodes_array[*v];
-			if (v_node.get_d() == INFINITY || v_node.inStack()) {
-				if (v_node.get_d() == INFINITY)
-					tarjan_visit(v_node, visited, stack);
-			v_node.set_low(min(v_node.get_low(), node.get_low()));
+			*v_node = nodes_array[*v];
+			if ((*v_node).get_d() == INFINITY || (*v_node).inStack()) {
+				if ((*v_node).get_d() == INFINITY)
+					tarjan_visit((*v_node), visited, stack);
+			(*v_node).set_low(min((*v_node).get_low(), node.get_low()));
 			}
 		}
 		if (node.get_low() == node.get_d()) {
-			//POPOPOP
+			while (&node != v_node) {
+				(*v_node) = stack->popNode();
+			}
 		}
 	}
 
