@@ -127,16 +127,17 @@ public:
 
 		stack->push(node.getID());
 
-		Node *v_node;
+		Node *v_node; //Pointer to a node
  		std::list<int>::iterator v;
-		std::list<int> neighbours = adj_list[id];
-		for (v = neighbours.begin(); v != neighbours.end(); v++) {
+		std::list<int> neighbours = adj_list[id]; // List of edges (neighbours of the node id)
+		for (v = neighbours.begin(); v != neighbours.end(); v++) { //For every neighbour
 			std::cout << "visiting " << *v << "\n"; // debugging
-			*v_node = nodes_array[*v];
+			*v_node = nodes_array[*v];				//Why do you we need *v_node = nodes_array[*v]; and not
+													// v_node = nodes_array[v]; 				
 			if ((*v_node).get_d() == INFINITY || (*v_node).inStack()) {
 				if ((*v_node).get_d() == INFINITY)
 					tarjan_visit((*v_node), visited, stack);
-			(*v_node).set_low(min((*v_node).get_low(), node.get_low()));
+				(*v_node).set_low(min((*v_node).get_low(), node.get_low()));
 			}
 		}
 		if (node.get_low() == node.get_d()) {
