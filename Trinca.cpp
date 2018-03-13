@@ -19,7 +19,7 @@ public:
 	Node(int id){
 		_id = id;
 		_d = INFINITY;
-		_low = INFINITY;
+		_low = 0; // Antes estava infinity
 		_in_stack = false; // tracks whether or not th Node is in the stack
 	}
 	bool inStack() { return _in_stack; }
@@ -27,28 +27,42 @@ public:
 	int getID() {return _id;}
 
 	double get_d() {return _d;}
-	double set_d(double val) { _d = val; }
+	double set_d(double val) {
+		_d = val;
+		std::cout << "d set to " << _d << "\n";
+	}
+
 	double get_low() {return _low;}
-	double set_low(double val) { _low = val; }
+	double set_low(double val) {
+		_low = val;
+	 	std::cout << "low set to " << _low << "\n";
+	}
 };
 
 class CustomStack : public std::stack<int> {
 private:
 	Node *nodes_array; //Array de nodes
+	bool *in_stack;
+
+
 public:
-	CustomStack(Node *nod_array) { // /!\ don't know if it should be created internally or externaly
+	CustomStack(Node *nod_array, bool *instack) { // /!\ don't know if it should be created internally or externaly
+		in_stack = instack;
 		nodes_array = nod_array;
 	}
 
 	void push(const int id) {
 		std::stack<int>::push(id);
+		in_stack[id] = true;
 		nodes_array[id].setStack(true);
 	}
 
 	int pop() {
 		int id = std::stack<int>::top();
-		std::stack<int>::pop();
+		in_stack[id] = false;
 		nodes_array[id].setStack(false);
+		std::stack<int>::pop();
+		return id;     // major bug. Nao tinhamos este return
 	}
 
 	Node popNode() {
@@ -107,65 +121,80 @@ public:
 			std::cout << nodes_array[id].getID() << "\n";
 	}
 
-	void /*std::list<int>*/ tarjanSCC() {
-		int visited = 0;
-		CustomStack *stack = new CustomStack(nodes_array);
-		//result = new std::list<int>;
-
-		for (int id=1; id < _nodes_num+1; id++) {
-			if (nodes_array[id].get_d() == INFINITY)
-				tarjan_visit(nodes_array[id], &visited, stack);
-		}
-		//return result
-	}
-
-	void tarjan_visit(Node node, int *visited, CustomStack *stack) {
-		int id = node.getID();
-		node.set_d(*visited);
-		node.set_low(*visited);
-		(*visited)++;
-
-		stack->push(id);  //Push int node to the stack
-
-		Node *v_node; //Pointer to a node
- 		std::list<int>::iterator v;
-		std::list<int> neighbours = adj_list[id]; // List of edges (neighbours of the node id)
-		for (v = neighbours.begin(); v != neighbours.end(); v++) { //For every neighbour
-			std::cout << "visiting " << *v << "\n"; // debugging
-			*v_node = nodes_array[*v]; 				
-			if ((*v_node).get_d() == INFINITY || (*v_node).inStack()) {
-				if ((*v_node).get_d() == INFINITY)
-					tarjan_visit((*v_node), visited, stack);
-				(*v_node).set_low(min((*v_node).get_low(), node.get_low()));
-			}
-		}
-		if (node.get_low() == node.get_d()){
-			int id_aux;
-			std::list<int> scc;			//Isto ate pode ser um array mas vai ter dimensao variavel
-			while (id != id_aux){
-				id_aux = stack->pop();
-				scc.push_front(id_aux);
-			}
-			// return scc;  Retorna uma das componentes
-		}
-		
-		
-		/*if (node.get_low() == node.get_d()) {
-			while (&node != v_node) {
-				(*v_node) = stack->popNode();
-			}
-		}*/
-	}
-
-	/*Comentarios
-	Porque *v_node = nodes_array[*v]; e nao v_node = nodes_array[v];
-	Nao percebo porque fazemos *v_node sempre
-	Nao percebo o ultimo if comentei e escrevi um novo, acho que nao precisamos do node basta o inteiro
-		podemos devolver um array de inteiros que e o scc
-	*/
-
-
+	void SCC();
+	void SCCvisit(int u, CustomStack *stack, bool *in_stack, double *d, double *low, std::list<int> scc);
 };
+
+void Graph::SCC() {
+	
+	bool *in_stack = new bool[_nodes_num+1];
+	double *d = new double[_nodes_num+1];
+	double *low = new double[_nodes_num+1];
+	CustomStack *stack = new CustomStack(nodes_array,in_stack);
+
+	std::list<int> scc; // return value
+
+	int u;
+	for (u=1; u < _nodes_num+1; u++)
+		d[u] = INFINITY;
+		in_stack[u] = false;
+
+	for (u=1; u < _nodes_num+1; u++) {
+		if (d[u] == INFINITY)
+			SCCvisit(u, stack, in_stack, d, low, scc);
+		std::cout << "\n";
+	}
+
+	//return scc;
+}
+
+
+void Graph::SCCvisit(int u, CustomStack *stack, bool *in_stack, double *d, double *low, std::list<int> scc) {
+	static int visited = 0;
+
+	/*int id = node.getID();
+	node.set_d(visited);
+	node.set_low(visited);
+	(visited)++;*/
+	d[u] = visited;
+	low[u] = visited;
+	visited++;
+
+	stack->push(u);  //Push int node to the stack
+	int v;
+
+	//Node *v_node; //Pointer to a node
+	std::list<int>::iterator it;
+	std::list<int> neighbours = adj_list[u]; // List of edges (neighbours of the node id)
+	for (it = neighbours.begin(); it != neighbours.end(); it++) { //For every neighbour
+		v = *it;
+		//std::cout << "visiting " << v << "\n"; // debugging
+		//*v_node = nodes_array[*v];
+		if (d[v] == INFINITY || in_stack[v]) {
+			if (d[v] == INFINITY)
+				SCCvisit(v, stack, in_stack, d, low, scc);
+			d[v] = min(low[v], low[u]);
+		}
+	}
+
+	if (d[u] == low[u]){
+		while (v != u){
+			v = stack->pop();
+			std::cout << v << "_";
+			//scc.push_front(v);
+		}
+	}
+	//std::cout << "\n";
+}
+
+/*Comentarios
+Porque *v_node = nodes_array[*v]; e nao v_node = nodes_array[v];
+Nao percebo porque fazemos *v_node sempre
+Nao percebo o ultimo if comentei e escrevi um novo, acho que nao precisamos do node basta o inteiro
+	podemos devolver um array de inteiros que e o scc
+*/
+
+
 
 
 int main(int argc, char** argv) {
@@ -183,8 +212,8 @@ int main(int argc, char** argv) {
    	scanf("%d %d", &beg, &end);
    	g.addEdge(beg, end);
    }
-	 g.listNodes();
-	 g.tarjanSCC();
+	 //g.listNodes();
+	 g.SCC();
 
    std::cout << "number of nodes: " << nodes << "\n";
    std::cout << "number of edges: " << edges << "\n";
