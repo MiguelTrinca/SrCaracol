@@ -125,27 +125,44 @@ public:
 		node.set_low(*visited);
 		(*visited)++;
 
-		stack->push(node.getID());
+		stack->push(id);  //Push int node to the stack
 
 		Node *v_node; //Pointer to a node
  		std::list<int>::iterator v;
 		std::list<int> neighbours = adj_list[id]; // List of edges (neighbours of the node id)
 		for (v = neighbours.begin(); v != neighbours.end(); v++) { //For every neighbour
 			std::cout << "visiting " << *v << "\n"; // debugging
-			*v_node = nodes_array[*v];				//Why do you we need *v_node = nodes_array[*v]; and not
-													// v_node = nodes_array[v]; 				
+			*v_node = nodes_array[*v]; 				
 			if ((*v_node).get_d() == INFINITY || (*v_node).inStack()) {
 				if ((*v_node).get_d() == INFINITY)
 					tarjan_visit((*v_node), visited, stack);
 				(*v_node).set_low(min((*v_node).get_low(), node.get_low()));
 			}
 		}
-		if (node.get_low() == node.get_d()) {
+		if (node.get_low() == node.get_d()){
+			int id_aux;
+			std::list<int> scc;			//Isto ate pode ser um array mas vai ter dimensao variavel
+			while (id != id_aux){
+				id_aux = stack->pop();
+				scc.push_front(id_aux);
+			}
+			// return scc;  Retorna uma das componentes
+		}
+		
+		
+		/*if (node.get_low() == node.get_d()) {
 			while (&node != v_node) {
 				(*v_node) = stack->popNode();
 			}
-		}
+		}*/
 	}
+
+	/*Comentarios
+	Porque *v_node = nodes_array[*v]; e nao v_node = nodes_array[v];
+	Nao percebo porque fazemos *v_node sempre
+	Nao percebo o ultimo if comentei e escrevi um novo, acho que nao precisamos do node basta o inteiro
+		podemos devolver um array de inteiros que e o scc
+	*/
 
 
 };
