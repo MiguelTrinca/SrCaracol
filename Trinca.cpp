@@ -4,78 +4,37 @@
 #include <list>
 #include <stdio.h>
 #include <stack>
-#include <math.h>
+//#include <math.h>
 
-//#define INFINITY /*implementation defined*/
-#define min(a,b) (((a)<(b))?(a):(b))
+//#define NIL /*implementation defined*/
+# define min(a,b) (((a)<(b))?(a):(b))
+# define NIL -1
 
-
-class Node {
-private:
-	int _id = 0;
-	double _d, _low;
-	bool _in_stack;
-public:
-	Node(int id){
-		_id = id;
-		_d = INFINITY;
-		_low = 0; // Antes estava infinity
-		_in_stack = false; // tracks whether or not th Node is in the stack
+// auxiliary function - adds padding
+std::string padding(int pad) {
+	std::string res;
+	while (pad > 0) {
+		res+="-";
+		pad--;
 	}
-	bool inStack() { return _in_stack; }
-	void setStack(bool in_stack) { _in_stack = in_stack;	}
-	int getID() {return _id;}
+	return res;
+}
 
-	double get_d() {return _d;}
-	double set_d(double val) {
-		_d = val;
-		std::cout << "d set to " << _d << "\n";
-	}
-
-	double get_low() {return _low;}
-	double set_low(double val) {
-		_low = val;
-	 	std::cout << "low set to " << _low << "\n";
-	}
-};
 
 class CustomStack : public std::stack<int> {
-private:
-	Node *nodes_array; //Array de nodes
-	bool *in_stack;
-
-
 public:
-	CustomStack(Node *nod_array, bool *instack) { // /!\ don't know if it should be created internally or externaly
-		in_stack = instack;
-		nodes_array = nod_array;
-	}
+	CustomStack(){};
 
 	void push(const int id) {
 		std::stack<int>::push(id);
-		in_stack[id] = true;
-		nodes_array[id].setStack(true);
+		//in_stack[id] = true;
 	}
 
 	int pop() {
 		int id = std::stack<int>::top();
-		in_stack[id] = false;
-		nodes_array[id].setStack(false);
+		//in_stack[id] = false;
 		std::stack<int>::pop();
 		return id;     // major bug. Nao tinhamos este return
-	}
-
-	Node popNode() {
-		int id = std::stack<int>::top();
-		std::stack<int>::pop();
-		nodes_array[id].setStack(false);
-		return nodes_array[id];
-	}
-
-	/* Checks if present in the stack in linear time (/!\ Hopefully)
-	 */
-	bool inStack(int id){
-		return nodes_array[id].inStack();  //Devolve true se estiver la dentro
 	}
 };
 
@@ -85,7 +44,6 @@ private:
 	int _nodes_num;
   int _edges_num;
 	std::list<int> *adj_list;  //Array de listas
-	Node *nodes_array; //Array de nodes
 
 public:
 	Graph(int nodes_num, int edges_num) {
@@ -93,109 +51,95 @@ public:
 		_edges_num = edges_num;
 
 		adj_list = new std::list<int>[_nodes_num+1]; //Criar o array com dimensao nodes + 1
-		nodes_array[_nodes_num + 1];				//Criar o array com dimensao nodes + 1
-
-		/*Criacao de todos os nodes quando e chamado o construtor do grafo
-		/		estamos a supor que os id dos nodes sao sequenciais ou seja
-		/		Se tivermos 3 nodes, sao 1,2 e 3.
-		*/
-		for(int id = 0; id<_nodes_num+1; id++)
-			createNode(id);
 	}
 
 	void addEdge(int beg, int end) {
 		adj_list[beg].push_front(end);  //Criar a edge.
 	}
 
-	/*Criacao de um node, caso o nosso postulado esteja errado*/
-	void createNode(int id){
-		//if(nodes_array[id].getID() == 0){ //Quero construir quando tenho NULL
-			Node *n = new Node(id); //Crio o node
-			nodes_array[id] = *n;          // Meto no array
-		//}
-	}
-
-	void listNodes() {
-		std::cout << "listing nodes" << "\n";
-		for(int id = 0; id<_nodes_num+1; id++)
-			std::cout << nodes_array[id].getID() << "\n";
-	}
-
 	void SCC();
-	void SCCvisit(int u, CustomStack *stack, bool *in_stack, double *d, double *low, std::list<int> scc);
+	void SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low, std::list<int> *scc, int lv);
 };
 
 void Graph::SCC() {
-	
+	int lv = 0; // recursion level
 	bool *in_stack = new bool[_nodes_num+1];
-	double *d = new double[_nodes_num+1];
-	double *low = new double[_nodes_num+1];
-	CustomStack *stack = new CustomStack(nodes_array,in_stack);
+	int *d = new int[_nodes_num+1];
+	int *low = new int[_nodes_num+1];
+	CustomStack stack;
 
 	std::list<int> scc; // return value
 
 	int u;
 	for (u=1; u < _nodes_num+1; u++)
-		d[u] = INFINITY;
+		d[u] = NIL;
 		in_stack[u] = false;
 
+	std::cout << "====== Initiating Tarjan ======" << '\n';
 	for (u=1; u < _nodes_num+1; u++) {
-		if (d[u] == INFINITY)
-			SCCvisit(u, stack, in_stack, d, low, scc);
+		if (d[u] == NIL)
+			SCCvisit(u, &stack, in_stack, d, low, &scc, lv);
 		std::cout << "\n";
 	}
+
+	/*std::cout << "printing result "<< scc.size() << '\n';
+	while (!scc.empty()) {
+		std::cout << scc.front() << "_";
+		scc.pop_front();
+	}*/
 
 	//return scc;
 }
 
 
-void Graph::SCCvisit(int u, CustomStack *stack, bool *in_stack, double *d, double *low, std::list<int> scc) {
+void Graph::SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low, std::list<int> *scc, int lv) {
 	static int visited = 0;
-
-	/*int id = node.getID();
-	node.set_d(visited);
-	node.set_low(visited);
-	(visited)++;*/
 	d[u] = visited;
 	low[u] = visited;
 	visited++;
 
+	// debugging
+	std::cout << padding(lv) << u << '\n';
+
+
 	stack->push(u);  //Push int node to the stack
+	in_stack[u] = true;
+
 	int v;
 
-	//Node *v_node; //Pointer to a node
 	std::list<int>::iterator it;
 	std::list<int> neighbours = adj_list[u]; // List of edges (neighbours of the node id)
 	for (it = neighbours.begin(); it != neighbours.end(); it++) { //For every neighbour
 		v = *it;
-		//std::cout << "visiting " << v << "\n"; // debugging
-		//*v_node = nodes_array[*v];
-		if (d[v] == INFINITY || in_stack[v]) {
-			if (d[v] == INFINITY)
-				SCCvisit(v, stack, in_stack, d, low, scc);
+		if (d[v] == NIL || in_stack[v]) {
+			if (d[v] == NIL)
+				SCCvisit(v, stack, in_stack, d, low, scc, lv+1);
 			d[v] = min(low[v], low[u]);
-		}
+		} /*else if (!in_stack[v]) {
+			// this is the case in which we find cross-edges, which is what we want
+		}*/
 	}
+
+	int iter = 0;
 
 	if (d[u] == low[u]){
-		while (v != u){
+		// starts a new scc
+
+		do { // check if it is a do while
 			v = stack->pop();
-			std::cout << v << "_";
-			//scc.push_front(v);
+			in_stack[v] = false;
+			(*scc).push_front(v);
+		} while (v != u);
+
+		// printing the SCC
+		/*std::cout << "SCC: ";
+		for (int i=0; i<(*scc).size();i++){
+			std::cout << (*scc).front() << "_";
+			(*scc).pop_front();
 		}
+		std::cout << "\n";*/
 	}
-	//std::cout << "\n";
 }
-
-/*Comentarios
-Porque *v_node = nodes_array[*v]; e nao v_node = nodes_array[v];
-Nao percebo porque fazemos *v_node sempre
-Nao percebo o ultimo if comentei e escrevi um novo, acho que nao precisamos do node basta o inteiro
-	podemos devolver um array de inteiros que e o scc
-*/
-
-
-
 
 int main(int argc, char** argv) {
 
@@ -212,11 +156,10 @@ int main(int argc, char** argv) {
    	scanf("%d %d", &beg, &end);
    	g.addEdge(beg, end);
    }
-	 //g.listNodes();
 	 g.SCC();
 
-   std::cout << "number of nodes: " << nodes << "\n";
-   std::cout << "number of edges: " << edges << "\n";
+   //std::cout << "number of nodes: " << nodes << "\n";
+   //std::cout << "number of edges: " << edges << "\n";
 
 	 return 0;
 }
