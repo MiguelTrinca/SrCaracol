@@ -58,7 +58,7 @@ public:
 	}
 
 	void SCC();
-	void SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low, std::list<int> *scc, int lv);
+	void SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low, int lv, int visited);
 };
 
 void Graph::SCC() {
@@ -68,8 +68,6 @@ void Graph::SCC() {
 	int *low = new int[_nodes_num+1];
 	CustomStack stack;
 
-	std::list<int> scc; // return value
-
 	int u;
 	for (u=1; u < _nodes_num+1; u++)
 		d[u] = NIL;
@@ -78,7 +76,7 @@ void Graph::SCC() {
 	std::cout << "====== Initiating Tarjan ======" << '\n';
 	for (u=1; u < _nodes_num+1; u++) {
 		if (d[u] == NIL)
-			SCCvisit(u, &stack, in_stack, d, low, &scc, lv);
+			SCCvisit(u, &stack, in_stack, d, low, lv, 0);
 		std::cout << "\n";
 	}
 
@@ -92,11 +90,10 @@ void Graph::SCC() {
 }
 
 
-void Graph::SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low, std::list<int> *scc, int lv) {
-	static int visited = 0;
+void Graph::SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low, int lv, int visited) {
+	//static int visited = 0;
 	d[u] = visited;
 	low[u] = visited;
-	visited++;
 
 	// debugging
 	std::cout << padding(lv) << u << '\n';
@@ -112,34 +109,51 @@ void Graph::SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low
 	for (it = neighbours.begin(); it != neighbours.end(); it++) { //For every neighbour
 		v = *it;
 		if (d[v] == NIL || in_stack[v]) {
-			if (d[v] == NIL)
-				SCCvisit(v, stack, in_stack, d, low, scc, lv+1);
+			if (d[v] == NIL){
+				SCCvisit(v, stack, in_stack, d, low, lv+1, visited+1);
+			}
 			d[v] = min(low[v], low[u]);
 		} /*else if (!in_stack[v]) {
 			// this is the case in which we find cross-edges, which is what we want
 		}*/
 	}
 
-	int iter = 0;
-
 	if (d[u] == low[u]){
 		// starts a new scc
-
+		std::list<int> scc;
 		do { // check if it is a do while
 			v = stack->pop();
 			in_stack[v] = false;
-			(*scc).push_front(v);
+			scc.push_front(v);
+			std::cout << "U:"<< u << "V: "<< v << " ";
 		} while (v != u);
 
 		// printing the SCC
-		/*std::cout << "SCC: ";
-		for (int i=0; i<(*scc).size();i++){
-			std::cout << (*scc).front() << "_";
-			(*scc).pop_front();
+
+
+		std::cout << "SCC: de size "<< scc.size() << " ";
+		for (int i=0; i<scc.size();i++){
+			std::cout << scc.front() << "_";
+			scc.pop_front();
 		}
-		std::cout << "\n";*/
+		std::cout << "\n";
 	}
 }
+/*
+5
+6
+1 2
+2 3
+3 1
+3 4
+4 5
+5 4
+1
+-2
+--3
+---4
+----5
+*/
 
 int main(int argc, char** argv) {
 
