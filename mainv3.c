@@ -267,3 +267,17 @@ int main(){
     
     return 0;
 }
+
+/*Tenho que ordenar o output, caso
+3
+3
+1 2
+2 3
+1 3
+Output tem de ser 
+1 2
+1 3
+2 3
+
+Ver porque e que para o terceiro input estou a imprimir mais cenas
+*/
