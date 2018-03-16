@@ -4,14 +4,16 @@
 #include <math.h>
 
 # define min(a,b) (((a)<(b))?(a):(b))
-
+# define NIL -1
 /*Global variables*/
 Link **adj_list; //  Lista de adjacencias (array de links)
 static Link *stack; //Stack  de vertexes
 int *stack_array;   // Array de vertices como auxilio a stack
 Vertex *vertex_array; // Array que guarda vertices para nao os contruir mais que uma vez
-int Visisted;         //Visisted para o algoritmo do tarjan
+int visited;         //Visisted para o algoritmo do tarjan
 int n_sccs = 0;     //Este se calhar pode sair daqui
+
+# define item Vertex
 
 /* ----------------------------------------------------------------------
                                 S T A C K
@@ -29,7 +31,7 @@ int in_stack(int value){
     return stack_array[value] == value;
 }
 
-void push(Vertex v){
+void push(item v){
     Link *new;
     new = (struct node *) malloc(sizeof(struct node));
     new->v = v;
@@ -40,10 +42,10 @@ void push(Vertex v){
     stack_array[id] = id; // Ir a posicao do array e meter la cenas
 }
 
-Vertex pop(){
-    Vertex v;
+item pop(){
+    item v;
     Link *old;
-    
+
     if(!is_empty_stack()){
         v = stack->v;
         old = stack;
@@ -63,14 +65,14 @@ Vertex pop(){
                                 L I S T
 ------------------------------------------------------------------------*/
 void init_list(Link *l){
-    l = NULL; 
+    l = NULL;
 }
 
 int is_empty_list(Link *l){
     return (l==NULL);
 }
 
-Link* push_front(Link *l, Vertex v){
+Link* push_front(Link *l, item v){
     Link *new;
     new = (struct node *) malloc(sizeof(struct node));
     new->v = v;
@@ -79,8 +81,8 @@ Link* push_front(Link *l, Vertex v){
     return l;  // tenho que devolver o l porque nao e global;
 }
 
-Vertex pop_list(Link *l){
-    Vertex v;
+item pop_list(Link *l){
+    item v;
     Link *old;
     if(!is_empty_list(l)){
         v = l->v;
@@ -95,10 +97,9 @@ Vertex pop_list(Link *l){
 }
 
 void print_list(Link *l){
-    for(Link *x = l; x!= NULL; x=x->next){  
+    for(Link *x = l; x!= NULL; x=x->next){
         printf("Vertice: %d\n", x->v->id);
     }
-    
 }
 
 
@@ -131,7 +132,7 @@ void init_Vertex_array(int v){
 }
 
 void add_edge(int begin, int end){
-    Vertex v = vertex_array[end]; 
+    Vertex v = vertex_array[end];
     adj_list[begin] = push_front(adj_list[begin], v);     // Ponho a edge no grafo (lista de adjacenicas)
 }
 
@@ -139,9 +140,9 @@ Vertex create_Vertex(int id){                             //Construo o vertice
     Vertex v;
     v = (struct vertex *)malloc(sizeof(struct vertex));
     v->id = id;
-    v->low = INFINITY;
-    v->d = INFINITY;  
-    return v;  
+    v->low = NIL;
+    v->d = NIL;
+    return v;
 }
 
 /* ----------------------------------------------------------------------
@@ -150,31 +151,32 @@ Vertex create_Vertex(int id){                             //Construo o vertice
 void tarjan_visit(Vertex v, int nodes, int *scc);
 void tarjan_algorithm(int nodes){
     int scc[nodes+1]; //Este array secundario, guardara os nodes que tenho que mudar
-    
-    Visisted = 0;
+
+    visited = 0;
     //Percorrer todos os vertices
-    for(int u = 1; u < nodes+1; u++){ // Se calhar posso tirar isto porque os ds ja sao INFINITY
-        vertex_array[u]->d = INFINITY; 
+    for(int u = 1; u < nodes+1; u++){ // Se calhar posso tirar isto porque os ds ja sao NIL
+        vertex_array[u]->d = NIL;
     }
-    for(int u = 1; u < nodes+1; u++){ 
-        if(vertex_array[u]->d == INFINITY){
+    for(int u = 1; u < nodes+1; u++){
+        if(vertex_array[u]->d == NIL){
             tarjan_visit(vertex_array[u], nodes, scc);
         }
     }
 }
 
 void tarjan_visit(Vertex u, int nodes, int *scc){
-    
+
     int u_id = u->id;
-    u->d = Visisted;
-    u->low = Visisted;
-    Visisted++;
+    u->d = visited;
+    u->low = visited;
+    printf("d[u]=%d low[u]=%d visited=%d\n", u->d, u->low, visited);
+    visited++;
 
     push(u);
-    
+
     for(Link *l = adj_list[u_id]; l!= NULL; l=l->next){  //Percorrer as arestas do vertice u;
-        if(l->v->d == INFINITY || in_stack(l->v->id)){
-            if(l->v->d == INFINITY){
+        if(l->v->d == NIL || in_stack(l->v->id)){
+            if(l->v->d == NIL){
                 tarjan_visit(l->v, nodes, scc);
             }
             u->low = min(u->low, l->v->low);
@@ -186,13 +188,13 @@ void tarjan_visit(Vertex u, int nodes, int *scc){
         int count = 0;  // Serve para ter a certeza que nao saimos do array quando estoua mudar o id dos vertices
         int new_id;     //Guarda o novo id que tenho que mudar para os vertices
         while(v->id != u->id){
-            v = pop(); //Sai todos os vertices que da stact que pertencem a scc       
+            v = pop(); //Sai todos os vertices que da stact que pertencem a scc
             scc[i] = v->id; // Ponho no array;
-            i++; 
-            count++; 
+            i++;
+            count++;
         }
         new_id = v->id;  // Este e o valor que eu tenho que mudar
-        
+
         for(int u = 0; u<count; u++){
             int old_id = scc[u];
             vertex_array[old_id]->id = new_id;
@@ -222,7 +224,7 @@ void print_Vertex_array(Vertex *v, int length){
 }
 
 void print_vertex(Vertex v){
-    printf("ID: %d \t D: %f \t Low: %f\n", v->id, v->d, v->low);
+    printf("ID: %d \t D: %d \t Low: %d\n", v->id, v->d, v->low);
 }
 
 void print_output(Vertex *v, int length){
@@ -243,14 +245,14 @@ void print_output(Vertex *v, int length){
                 printf("%d %d\n", v[i]->id, v[i+1]->id);
             }
             i += 2;
-        }    
+        }
     }
 }
 /* ----------------------------------------------------------------------
                                  M A I N
 ------------------------------------------------------------------------*/
 int main(){
-    int nodes;  
+    int nodes;
     int edges;
     scanf("%d", &nodes);
     scanf("%d", &edges);
@@ -262,9 +264,9 @@ int main(){
     init_graph(nodes, edges, edges_input);           //Inicializa o grafo
 
     tarjan_algorithm(nodes);
-   
+
     print_output(edges_input, edges*2);
-    
+
     return 0;
 }
 
@@ -274,7 +276,7 @@ int main(){
 1 2
 2 3
 1 3
-Output tem de ser 
+Output tem de ser
 1 2
 1 3
 2 3
