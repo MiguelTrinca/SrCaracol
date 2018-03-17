@@ -10,12 +10,21 @@
 # define low(i) (i*2+1)
 # define min(a,b) (((a)<(b))?(a):(b))
 # define NIL -1
+# define Item
 
-
-typedef struct node {
+typedef int bool;
+// Stores information about a node
+typedef struct node_info {
   int d;
   int l;
-} Node;
+} Node_info;
+
+typedef struct stack {
+  bool *in_stack; // array that stores if a given node is in the stack
+  int sp; // stack pointer
+  int *stack;
+  int max;
+} Stack;
 
 typedef struct edge {
   int x;
@@ -29,12 +38,16 @@ typedef struct graph {
   int nodes_n;
 } Graph;
 
+/* ----------------------------------------------------------------------
+                              E D G E S
+------------------------------------------------------------------------*/
 Edge *create_edges_array(int size){
   return (Edge*) malloc(sizeof(Edge)*size);
 }
 
 /* Parses edges and with count sort puts them in order
- */void parse_edges(Edge *edges, int edges_n, int *edges_cnt) {
+ */
+void parse_edges(Edge *edges, int edges_n, int *edges_cnt) {
   Edge *edges_input = create_edges_array(edges_n);  // TODO one of these is
   Edge *edges_tmp  = create_edges_array(edges_n);   // uncessessary TODO
   for (int i=0; i<edges_n; i++){
@@ -80,19 +93,74 @@ Edge *create_edges_array(int size){
   free(edges_input);
 }
 
-// NODE OPERATIONS
-
-void get_neighbours(int node_id, Edge *edges, int* edges_index, int nodes_n, int edges_n) {
-  int start, end;
-  start = edges_index[node_id];
-  if (node_id == nodes_n) end = edges_n; // if it is the last node
-  else end = edges_index[node_id+1];
-
-  printf("Printing neighbours of %d\n", node_id);
-  for (int i=start; i<end; i++)
-    printf("%d\n", edges[i].y);
+/* ----------------------------------------------------------------------
+                              S T A C K
+------------------------------------------------------------------------*/
+/*
+ * The stack is an array of size nodes_n given that the tarjan algorithm
+ * will not put repeated nodes in the stack (verify this!!!TODO)
+ */
+Stack* init_stack(int nodes_n){
+  int *stack = (int*) malloc(sizeof(int)*(nodes_n+1)); // TODO - why +1
+  int *in_stack = (int*) malloc(sizeof(int)*(nodes_n+1));
+  Stack *s_struct = (Stack*) malloc(sizeof(Stack));
+  s_struct->stack = stack;
+  s_struct->in_stack = in_stack;
+  s_struct->sp = 0;
+  s_struct->max = nodes_n;
+  return s_struct;
 }
 
+int is_empty_stack(Stack *s){
+    return (s->sp == 0);
+}
+
+void push(Stack *s, int v) {
+  if (s->sp > s->max) {
+    printf("ERROR: reached stack limit\n");
+    return;
+  }
+  s->stack[(s->sp)++] = v;
+  s->in_stack[v] = 1;
+}
+
+int pop(Stack *s) {
+  int v = s->stack[--(s->sp)];
+  s->in_stack[v] = 0;
+  return v;
+}
+
+int instack(Stack *s, int v) {
+  return s->in_stack[v];
+}
+
+void print_stack(Stack *s) {
+  int sp = s->sp;
+  sp--;
+  printf("printing Stack: >");
+  while (sp >= 0) {
+    printf("%d|",s->stack[sp--]);
+  }printf("\n");
+}
+
+/* ----------------------------------------------------------------------
+                      N O D E   O P E R A T I O N
+------------------------------------------------------------------------*/
+/*
+ * Returns the index of the first neighbour
+ */
+int first_neighbour(int node_id, int* edges_index) {
+  return edges_index[node_id];
+}
+
+/*
+ * Returns the index of the last neighbour
+ */
+int last_neighbour(int node_id, int* edges_index, int nodes_n, int edges_n) {
+  if (node_id == nodes_n)
+    return edges_n; // if it is the last node
+  return edges_index[node_id+1];
+}
 /* ----------------------------------------------------------------------
                                  M A I N
 ------------------------------------------------------------------------*/
@@ -103,8 +171,8 @@ int main(){
     scanf("%d", &edges_n);
 
     //stack
-    int stack[nodes_n]; // bigger than it needs
-    int *sp = stack;  // stack pointer
+    Stack *stack = init_stack(nodes_n); //Inicializa a stack
+
 
     // edges
     int *edges_index = malloc(sizeof(int)*nodes_n+1); // Array do count
@@ -115,16 +183,21 @@ int main(){
     }
 
     // nodes (starts at 1)
-    int *nodes = malloc(sizeof(int)*2*(nodes_n+1)); // node [d,low]
+    Node_info *nodes_info = malloc(sizeof(Node_info)*(nodes_n+1)); // node [d,low]
     for (int i=1; i<=nodes_n;i++) {
-      nodes[d(i)] = NIL;   // set d
-      nodes[low(i)] = NIL; // set low
+      nodes_info[i].d = NIL;   // set d
+      nodes_info[i].l = NIL; // set low
     }
 
-    for (int i=1;i<=nodes_n;i++)
-      get_neighbours(i,edges,edges_index,nodes_n,edges_n);
+    // DEBUG Printing de todos os neighbours
+    for (int i=1;i<=nodes_n;i++){
+      printf("\nprinting neighbours of %d\n", i);
+      int first = first_neighbour(i, edges_index);
+      int last = last_neighbour(i,edges_index,nodes_n, edges_n);
+      for (int j=first; j<last; j++)
+        printf("|%d", edges[j].y);
+    }
 
-    //init_stack(nodes);                  //Inicializa a stack
     //init_Vertex_array(nodes);           //Incializa o array de vetores
     //init_graph(nodes, edges, edges_input);           //Inicializa o grafo
 
