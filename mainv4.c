@@ -8,7 +8,9 @@
 # define key(i) (i*2)
 # define d(i) (i*2)
 # define low(i) (i*2+1)
+# define min(a,b) (((a)<(b))?(a):(b))
 # define NIL -1
+
 
 typedef struct node {
   int d;
@@ -20,13 +22,19 @@ typedef struct edge {
   int y;
 } Edge;
 
+typedef struct graph {
+  Edge *edges;
+  int *edges_index;
+  int edges_n;
+  int nodes_n;
+} Graph;
+
 Edge *create_edges_array(int size){
   return (Edge*) malloc(sizeof(Edge)*size);
 }
 
 /* Parses edges and with count sort puts them in order
- */
-void parse_edges2(Edge *edges, int edges_n, int *edges_cnt) {
+ */void parse_edges(Edge *edges, int edges_n, int *edges_cnt) {
   Edge *edges_input = create_edges_array(edges_n);  // TODO one of these is
   Edge *edges_tmp  = create_edges_array(edges_n);   // uncessessary TODO
   for (int i=0; i<edges_n; i++){
@@ -74,6 +82,17 @@ void parse_edges2(Edge *edges, int edges_n, int *edges_cnt) {
 
 // NODE OPERATIONS
 
+void get_neighbours(int node_id, Edge *edges, int* edges_index, int nodes_n, int edges_n) {
+  int start, end;
+  start = edges_index[node_id];
+  if (node_id == nodes_n) end = edges_n; // if it is the last node
+  else end = edges_index[node_id+1];
+
+  printf("Printing neighbours of %d\n", node_id);
+  for (int i=start; i<end; i++)
+    printf("%d\n", edges[i].y);
+}
+
 /* ----------------------------------------------------------------------
                                  M A I N
 ------------------------------------------------------------------------*/
@@ -88,18 +107,11 @@ int main(){
     int *sp = stack;  // stack pointer
 
     // edges
-    int *edges = malloc(sizeof(int)*2*edges_n); // Array que guarda os inputs
     int *edges_index = malloc(sizeof(int)*nodes_n+1); // Array do count
-
-    //parse_edges(edges, edges_n, edges_index); // parses and sorts
-    // edges_index is the index of the edges's beginning
-
-    // trying edges2
-    //Edge *edges2 = create_edges_array(edges_n);
-    Edge *edges2 = create_edges_array(edges_n);
-    parse_edges2(edges2, edges_n, edges_index);
+    Edge *edges = create_edges_array(edges_n);
+    parse_edges(edges, edges_n, edges_index);
     for (int i=0; i<edges_n;i++) {
-      printf("%d %d\n", edges2[i].x, edges2[i].y);
+      printf("%d %d\n", edges[i].x, edges[i].y);
     }
 
     // nodes (starts at 1)
@@ -108,6 +120,9 @@ int main(){
       nodes[d(i)] = NIL;   // set d
       nodes[low(i)] = NIL; // set low
     }
+
+    for (int i=1;i<=nodes_n;i++)
+      get_neighbours(i,edges,edges_index,nodes_n,edges_n);
 
     //init_stack(nodes);                  //Inicializa a stack
     //init_Vertex_array(nodes);           //Incializa o array de vetores
