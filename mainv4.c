@@ -20,39 +20,6 @@ typedef struct edge {
   int y;
 } Edge;
 
-
-/* Parses edges and with count sort puts them in order
- */
-void parse_edges(int *edges, int edges_n, int *edges_cnt) {
-  int edges_input[edges_n*2]; // input vector
-
-  printf("edges_n %d\n", edges_n);
-  for (int i=0; i<edges_n; i++)
-    scanf("%d %d", edges_input+key(i), edges_input+key(i)+1); // pointer arithmetic
-
-  int i, j, cnt[edges_n+1];
-
-  for (j = 0; j<edges_n; j++) // reset count
-    cnt[j] = 0;
-
-  for (i=0; i<edges_n; i++){
-    cnt[edges_input[key(i)]+1]++;
-
-  }
-
-  for (j = 1; j<=edges_n; j++) {
-    cnt[j] += cnt[j-1];
-  }
-
-  for (j=0; j<edges_n; j++)
-    edges_cnt[j] = cnt[j]; // copia o cnt para edges_cnt
-
-  for (i=0; i<edges_n; i++) {
-    edges[2*cnt[edges_input[key(i)]]+1] = edges_input[key(i)+1]; // copy end
-    edges[2*cnt[edges_input[key(i)]]++] = edges_input[key(i)]; // copy beg
-  }
-}
-
 Edge *create_edges_array(int size){
   return (Edge*) malloc(sizeof(Edge)*size);
 }
@@ -60,8 +27,8 @@ Edge *create_edges_array(int size){
 /* Parses edges and with count sort puts them in order
  */
 void parse_edges2(Edge *edges, int edges_n, int *edges_cnt) {
-  Edge *edges_input = create_edges_array(edges_n);
-  Edge *edges_tmp  = create_edges_array(edges_n);
+  Edge *edges_input = create_edges_array(edges_n);  // TODO one of these is
+  Edge *edges_tmp  = create_edges_array(edges_n);   // uncessessary TODO
   for (int i=0; i<edges_n; i++){
     scanf("%d %d", &(edges_input[i].x), &(edges_input[i].y)); // pointer arithmetic
     //scanf("%d %d", &k, &p); // pointer arithmetic
@@ -83,8 +50,8 @@ void parse_edges2(Edge *edges, int edges_n, int *edges_cnt) {
   for (j=0; j<edges_n; j++)
     edges_cnt[j] = cnt[j]; // copia o cnt para edges_cnt
   for (i=0; i<edges_n; i++) {
-    edges[cnt[edges_input[i].y]].x = edges_input[i].x; // copy end
-    edges[cnt[edges_input[i].y]++].y = edges_input[i].y; // copy beg
+    edges_tmp[cnt[edges_input[i].y]].x = edges_input[i].x; // copy end
+    edges_tmp[cnt[edges_input[i].y]++].y = edges_input[i].y; // copy beg
   }
 
   // SORTING IN X
@@ -92,24 +59,17 @@ void parse_edges2(Edge *edges, int edges_n, int *edges_cnt) {
   for (j = 0; j<edges_n; j++) // reset count
     cnt[j] = 0;
   for (i=0; i<edges_n; i++)
-    cnt[edges[i].x+1]++;
+    cnt[edges_tmp[i].x+1]++;
   for (j = 1; j<=edges_n; j++)
     cnt[j] += cnt[j-1];
   for (j=0; j<edges_n; j++)
     edges_cnt[j] = cnt[j]; // copia o cnt para edges_cnt
   for (i=0; i<edges_n; i++) {
-    edges_tmp[cnt[edges[i].x]].y = edges[i].y; // copy end
-    edges_tmp[cnt[edges[i].x]++].x = edges[i].x; // copy beg
+    edges[cnt[edges_tmp[i].x]].y = edges_tmp[i].y; // copy end
+    edges[cnt[edges_tmp[i].x]++].x = edges_tmp[i].x; // copy beg
   }
-
-  Edge *tmp = edges;
-  edges = edges_tmp;
-  free(tmp);
-
-  printf("edges_output\n");
-  for (i=0; i<edges_n;i++) {
-    printf("|%d %d|\n", edges[i].x, edges[i].y);
-  }
+  free(edges_tmp);
+  free(edges_input);
 }
 
 // NODE OPERATIONS
@@ -139,7 +99,7 @@ int main(){
     Edge *edges2 = create_edges_array(edges_n);
     parse_edges2(edges2, edges_n, edges_index);
     for (int i=0; i<edges_n;i++) {
-      //  printf("%d %d\n", edges2[i].x, edges2[i].y);
+      printf("%d %d\n", edges2[i].x, edges2[i].y);
     }
 
     // nodes (starts at 1)
