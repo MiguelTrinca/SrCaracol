@@ -4,6 +4,7 @@
 */
 # include <stdio.h>
 # include <stdlib.h>
+# include <math.h>
 
 # define key(i) (i*2)
 # define d(i) (i*2)
@@ -15,8 +16,8 @@
 typedef int bool;
 // Stores information about a node
 typedef struct node_info {
-  int d;
-  int l;
+  double d;
+  double low;
 } Node_info;
 
 typedef struct stack {
@@ -38,6 +39,11 @@ typedef struct graph {
   int nodes_n;
 } Graph;
 
+
+//Global elite
+int Visisted;
+int n_sccs=0;
+
 /* ----------------------------------------------------------------------
                               E D G E S
 ------------------------------------------------------------------------*/
@@ -50,33 +56,28 @@ Edge *create_edges_array(int size){
 void parse_edges(Edge *edges, int edges_n, int *edges_cnt) {
   Edge *edges_input = create_edges_array(edges_n);  // TODO one of these is
   Edge *edges_tmp  = create_edges_array(edges_n);   // uncessessary TODO
-  for (int i=0; i<edges_n; i++){
-    scanf("%d %d", &(edges_input[i].x), &(edges_input[i].y)); // pointer arithmetic
-    //scanf("%d %d", &k, &p); // pointer arithmetic
-    //printf("%d: %d %d\n",i, edges_input[i].x, edges_input[i].y );
-  }
+  for (int i=0; i<edges_n; i++)
+    scanf("%d %d", &(edges_tmp[i].x), &(edges_tmp[i].y)); // pointer arithmetic
 
   for (int i=0; i<edges_n;i++) {
-    printf("|%d %d|\n", edges_input[i].x, edges_input[i].y);
+    printf("|%d %d|\n", edges_tmp[i].x, edges_tmp[i].y);
   }
 
   // SORTING IN Y
-  int i, j, cnt[edges_n+1];
+  /*int i, j, cnt[edges_n+1];
   for (j = 0; j<edges_n; j++) // reset count
     cnt[j] = 0;
   for (i=0; i<edges_n; i++)
     cnt[edges_input[i].y+1]++;
   for (j = 1; j<=edges_n; j++)
     cnt[j] += cnt[j-1];
-  for (j=0; j<edges_n; j++)
-    edges_cnt[j] = cnt[j]; // copia o cnt para edges_cnt
   for (i=0; i<edges_n; i++) {
     edges_tmp[cnt[edges_input[i].y]].x = edges_input[i].x; // copy end
     edges_tmp[cnt[edges_input[i].y]++].y = edges_input[i].y; // copy beg
-  }
+  }*/
 
   // SORTING IN X
-  //int i, j, cnt[edges_n+1];
+  int i, j, cnt[edges_n+1];
   for (j = 0; j<edges_n; j++) // reset count
     cnt[j] = 0;
   for (i=0; i<edges_n; i++)
@@ -91,6 +92,7 @@ void parse_edges(Edge *edges, int edges_n, int *edges_cnt) {
   }
   free(edges_tmp);
   free(edges_input);
+
 }
 
 /* ----------------------------------------------------------------------
@@ -101,11 +103,9 @@ void parse_edges(Edge *edges, int edges_n, int *edges_cnt) {
  * will not put repeated nodes in the stack (verify this!!!TODO)
  */
 Stack* init_stack(int nodes_n){
-  int *stack = (int*) malloc(sizeof(int)*(nodes_n+1)); // TODO - why +1
-  int *in_stack = (int*) malloc(sizeof(int)*(nodes_n+1));
   Stack *s_struct = (Stack*) malloc(sizeof(Stack));
-  s_struct->stack = stack;
-  s_struct->in_stack = in_stack;
+  s_struct->stack = (int*) malloc(sizeof(int)*(nodes_n+1)); // TODO - why +1
+  s_struct->in_stack = (int*) malloc(sizeof(int)*(nodes_n+1));
   s_struct->sp = 0;
   s_struct->max = nodes_n;
   return s_struct;
@@ -130,7 +130,7 @@ int pop(Stack *s) {
   return v;
 }
 
-int instack(Stack *s, int v) {
+int in_stack(Stack *s, int v) {
   return s->in_stack[v];
 }
 
@@ -161,6 +161,72 @@ int last_neighbour(int node_id, int* edges_index, int nodes_n, int edges_n) {
     return edges_n; // if it is the last node
   return edges_index[node_id+1];
 }
+
+/* ----------------------------------------------------------------------
+                    T A R J A N     A L G O R T I H M
+------------------------------------------------------------------------*/
+void tarjan_visit(int v, int nodes, int edges, int *scc, Node_info *node_info, Stack *stack, int *edges_index, int *edges_array);
+void tarjan_algorithm(int nodes, int edges,  Node_info *node_info, Stack *stack, int *edges_index, int *edges_array){
+    int scc[nodes+1]; //Este array secundario, guardara os nodes que tenho que mudar
+    Visisted = 0;
+
+    //Percorrer todos os vertices
+    /*for(int u = 1; u < nodes+1; u++){ // Se calhar posso tirar isto porque os ds ja sao INFINITY
+        vertex_array[u]->d = INFINITY;
+    }*/
+    for(int u = 1; u < nodes+1; u++){
+        if(node_info[u].d == INFINITY){
+            tarjan_visit(u, nodes, edges, scc, node_info, stack, edges_index, edges_array);
+        }
+    }
+}
+
+void tarjan_visit(int u, int nodes, int edges, int *scc, Node_info *node_info, Stack *stack, int *edges_index, int *edges_array){
+
+    node_info[u].d = Visisted;
+    node_info[u].low = Visisted;
+    Visisted++;
+
+    push(stack, u);
+
+    int first = first_neighbour(u, edges_index);
+    int last = last_neighbour(u, edges_index, nodes, edges);
+    for (int j=first; j<last; j++){
+      if (node_info[j].d == INFINITY || in_stack(stack, j)){
+        if(node_info[j].d == INFINITY){
+          tarjan_visit(j, nodes, edges, scc, node_info, stack, edges_index, edges_array);
+        }
+      }
+      node_info[u].low = min(node_info[u].low, node_info[j].low);
+    }
+
+
+    if(node_info[u].d == node_info[u].low){
+        int v = 0;
+        int i = 0;
+        int count = 0;
+        int new_id;     //Guarda o novo id que tenho que mudar para os vertices
+        while(v != u){
+            v = pop(stack); //Sai todos os vertices que da stact que pertencem a scc
+            scc[i] = v; // Ponho no array;
+            i++;
+            count++;
+        }
+        new_id = v;  // Este e o valor que eu tenho que mudar
+
+        for(int u = 0; u<count; u++){
+            int old_id = scc[u];
+            for(int i = 0; i<nodes+1; i++){
+              if (edges_array[i].y == old_id) edges_array[u].y = new_id;
+              if (edges_array[i].x == old_id) edges_array[u].x = new_id;
+            }
+        }
+        n_sccs++; //Incrementa o numero de sccs (Precisamos para o output)
+    }
+}
+
+
+
 /* ----------------------------------------------------------------------
                                  M A I N
 ------------------------------------------------------------------------*/
@@ -178,15 +244,17 @@ int main(){
     int *edges_index = malloc(sizeof(int)*nodes_n+1); // Array do count
     Edge *edges = create_edges_array(edges_n);
     parse_edges(edges, edges_n, edges_index);
+    // TODO verificar edges_index se começa em 1 /!\ TODO
+
     for (int i=0; i<edges_n;i++) {
       printf("%d %d\n", edges[i].x, edges[i].y);
     }
 
     // nodes (starts at 1)
-    Node_info *nodes_info = malloc(sizeof(Node_info)*(nodes_n+1)); // node [d,low]
+    Node_info *node_info = malloc(sizeof(Node_info)*(nodes_n+1)); // node [d,low]
     for (int i=1; i<=nodes_n;i++) {
-      nodes_info[i].d = NIL;   // set d
-      nodes_info[i].l = NIL; // set low
+      node_info[i].d = INFINITY;   // set d
+      node_info[i].low = INFINITY; // set low
     }
 
     // DEBUG Printing de todos os neighbours
@@ -198,12 +266,7 @@ int main(){
         printf("|%d", edges[j].y);
     }
 
-    //init_Vertex_array(nodes);           //Incializa o array de vetores
-    //init_graph(nodes, edges, edges_input);           //Inicializa o grafo
-
-    //tarjan_algorithm(nodes);
-
-    //print_output(edges_input, edges*2);
+    tarjan_algorithm(nodes_n, edges_n, node_info, stack, edges_index, edges);
 
     return 0;
 }
