@@ -60,7 +60,7 @@ public:
 	}
 
 	void SCC();
-	void SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low, int lv);
+	void SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low, int lv, int visited);
 };
 
 void Graph::SCC() {
@@ -78,7 +78,7 @@ void Graph::SCC() {
 	std::cout << "====== Initiating Tarjan ======" << '\n';
 	for (u=1; u < _nodes_num+1; u++) {
 		if (d[u] == NIL)
-			SCCvisit(u, &stack, in_stack, d, low, lv);
+			SCCvisit(u, &stack, in_stack, d, low, lv, 0);
 		std::cout << "\n";
 	}
 
@@ -92,11 +92,10 @@ void Graph::SCC() {
 }
 
 
-void Graph::SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low, int lv) {
-	static int visited = 0;
+void Graph::SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low, int lv, int visited) {
+	//static int visited = 0;
 	d[u] = visited;
 	low[u] = visited;
-	visited++;
 
 	// debugging
 	std::cout << padding(lv) << u << '\n';
@@ -112,8 +111,9 @@ void Graph::SCCvisit(int u, CustomStack *stack, bool *in_stack, int *d, int *low
 	for (it = neighbours.begin(); it != neighbours.end(); it++) { //For every neighbour
 		v = *it;
 		if (d[v] == NIL || in_stack[v]) {
-			if (d[v] == NIL)
-				SCCvisit(v, stack, in_stack, d, low, lv+1);
+			if (d[v] == NIL){
+				SCCvisit(v, stack, in_stack, d, low, lv+1, visited+1);
+			}
 			d[v] = min(low[v], low[u]);
 		} /*else if (!in_stack[v]) {
 			// this is the case in which we find cross-edges, which is what we want
