@@ -165,8 +165,8 @@ int last_neighbour(int node_id, int* edges_index, int nodes_n, int edges_n) {
 /* ----------------------------------------------------------------------
                     T A R J A N     A L G O R T I H M
 ------------------------------------------------------------------------*/
-void tarjan_visit(int v, int nodes, int edges, int *scc, Node_info *node_info, Stack *stack, int *edges_index, int *edges_array);
-void tarjan_algorithm(int nodes, int edges,  Node_info *node_info, Stack *stack, int *edges_index, int *edges_array){
+void tarjan_visit(int v, int nodes, int edges, int *scc, Node_info *node_info, Stack *stack, int *edges_index, Edge *edges_array);
+void tarjan_algorithm(int nodes, int edges,  Node_info *node_info, Stack *stack, int *edges_index, Edge *edges_array){
     int scc[nodes+1]; //Este array secundario, guardara os nodes que tenho que mudar
     Visisted = 0;
 
@@ -181,7 +181,7 @@ void tarjan_algorithm(int nodes, int edges,  Node_info *node_info, Stack *stack,
     }
 }
 
-void tarjan_visit(int u, int nodes, int edges, int *scc, Node_info *node_info, Stack *stack, int *edges_index, int *edges_array){
+void tarjan_visit(int u, int nodes, int edges, int *scc, Node_info *node_info, Stack *stack, int *edges_index, Edge *edges_array){
 
     node_info[u].d = Visisted;
     node_info[u].low = Visisted;
