@@ -77,14 +77,16 @@ void parse_edges(Edge *edges, int edges_n, int *edges_cnt) {
   }*/
 
   // SORTING IN X
-  int i, j, cnt[edges_n+1];
+  int i, j;
+  int *cnt = (int*) calloc(edges_n+1,sizeof(int));
   for (j = 0; j<edges_n; j++) // reset count
     cnt[j] = 0;
   for (i=0; i<edges_n; i++)
     cnt[edges_tmp[i].x+1]++;
-  for (j = 1; j<=edges_n; j++)
+  for (j = 1; j<=edges_n; j++){
     cnt[j] += cnt[j-1];
-  for (j=0; j<edges_n; j++)
+  }
+  for (j=0; j<=edges_n; j++)
     edges_cnt[j] = cnt[j]; // copia o cnt para edges_cnt
   for (i=0; i<edges_n; i++) {
     edges[cnt[edges_tmp[i].x]].y = edges_tmp[i].y; // copy end
@@ -150,6 +152,7 @@ void print_stack(Stack *s) {
  * Returns the index of the first neighbour
  */
 int first_neighbour(int node_id, int* edges_index) {
+  printf("first neighbour index %d\n", edges_index[node_id-1]);
   return edges_index[node_id];
 }
 
@@ -157,16 +160,18 @@ int first_neighbour(int node_id, int* edges_index) {
  * Returns the index of the last neighbour
  */
 int last_neighbour(int node_id, int* edges_index, int nodes_n, int edges_n) {
-  if (node_id == nodes_n)
-    return edges_n; // if it is the last node
+  if (node_id == nodes_n) {
+    printf("last neighb of %d NODE_iD = NODES_N\n", node_id);
+      return edges_n; // if it is the last node
+  }
   return edges_index[node_id+1];
 }
 
 /* ----------------------------------------------------------------------
                     T A R J A N     A L G O R T I H M
 ------------------------------------------------------------------------*/
-void tarjan_visit(int v, int nodes, int edges, int *scc, Node_info *node_info, Stack *stack, int *edges_index, int *edges_array);
-void tarjan_algorithm(int nodes, int edges,  Node_info *node_info, Stack *stack, int *edges_index, int *edges_array){
+void tarjan_visit(int v, int nodes, int edges, int *scc, Node_info *node_info, Stack *stack, int *edges_index, Edge *edges_array);
+void tarjan_algorithm(int nodes, int edges,  Node_info *node_info, Stack *stack, int *edges_index, Edge *edges_array){
     int scc[nodes+1]; //Este array secundario, guardara os nodes que tenho que mudar
     Visisted = 0;
 
@@ -181,7 +186,7 @@ void tarjan_algorithm(int nodes, int edges,  Node_info *node_info, Stack *stack,
     }
 }
 
-void tarjan_visit(int u, int nodes, int edges, int *scc, Node_info *node_info, Stack *stack, int *edges_index, int *edges_array){
+void tarjan_visit(int u, int nodes, int edges, int *scc, Node_info *node_info, Stack *stack, int *edges_index, Edge *edges_array){
 
     node_info[u].d = Visisted;
     node_info[u].low = Visisted;
@@ -257,13 +262,19 @@ int main(){
       node_info[i].low = INFINITY; // set low
     }
 
+    printf("priting endges_index: ");
+    for (int i=1;i<=nodes_n;i++)
+      printf("|%d", edges_index[i]);
+    printf("\n");
     // DEBUG Printing de todos os neighbours
     for (int i=1;i<=nodes_n;i++){
-      printf("\nprinting neighbours of %d\n", i);
+      printf("====== Printing neighbours of %d ======\n", i);
       int first = first_neighbour(i, edges_index);
       int last = last_neighbour(i,edges_index,nodes_n, edges_n);
+      printf("ranges from %d to %d\n", first, last);
       for (int j=first; j<last; j++)
         printf("|%d", edges[j].y);
+      printf("\n");
     }
 
     tarjan_algorithm(nodes_n, edges_n, node_info, stack, edges_index, edges);
