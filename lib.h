@@ -19,5 +19,10 @@ typedef struct int_node{
     struct int_node *next;
 } Stack;
 
+typedef struct par{
+    int begin;
+    int end;
+} *Par;
+
 
 #endif
