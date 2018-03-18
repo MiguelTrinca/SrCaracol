@@ -51,20 +51,35 @@ Edge *create_edges_array(int size){
   return (Edge*) malloc(sizeof(Edge)*size);
 }
 
+int *create_edges_index(int edges_n, int nodes_n, Edge *edges){
+  int *edges_index = calloc(nodes_n+2,sizeof(int));
+  int i;
+
+  for(i=0; i<edges_n;i++)
+    edges_index[edges[i].x+1] += 1;
+
+  for(i=1; i<nodes_n+2;i++)
+    edges_index[i] += edges_index[i-1];
+
+  return edges_index;
+}
+
 /* Parses edges and with count sort puts them in order
  */
-void parse_edges(Edge *edges, int edges_n, int *edges_cnt) {
+void parse_edges(Edge *edges, int edges_n) {
   Edge *edges_input = create_edges_array(edges_n);  // TODO one of these is
   Edge *edges_tmp  = create_edges_array(edges_n);   // uncessessary TODO
   for (int i=0; i<edges_n; i++)
-    scanf("%d %d", &(edges_tmp[i].x), &(edges_tmp[i].y)); // pointer arithmetic
+    scanf("%d %d", &(edges_input[i].x), &(edges_input[i].y)); // pointer arithmetic
 
   for (int i=0; i<edges_n;i++) {
-    printf("|%d %d|\n", edges_tmp[i].x, edges_tmp[i].y);
+    printf("|%d %d|\n", edges_input[i].x, edges_input[i].y);
   }
 
   // SORTING IN Y
-  /*int i, j, cnt[edges_n+1];
+  int i, j;
+  int *cnt = (int*) calloc(edges_n+1,sizeof(int));
+
   for (j = 0; j<edges_n; j++) // reset count
     cnt[j] = 0;
   for (i=0; i<edges_n; i++)
@@ -74,11 +89,11 @@ void parse_edges(Edge *edges, int edges_n, int *edges_cnt) {
   for (i=0; i<edges_n; i++) {
     edges_tmp[cnt[edges_input[i].y]].x = edges_input[i].x; // copy end
     edges_tmp[cnt[edges_input[i].y]++].y = edges_input[i].y; // copy beg
-  }*/
+  }
 
   // SORTING IN X
-  int i, j;
-  int *cnt = (int*) calloc(edges_n+1,sizeof(int));
+  //int i, j;
+  //int *cnt = (int*) calloc(edges_n+1,sizeof(int));
   for (j = 0; j<edges_n; j++) // reset count
     cnt[j] = 0;
   for (i=0; i<edges_n; i++)
@@ -86,15 +101,15 @@ void parse_edges(Edge *edges, int edges_n, int *edges_cnt) {
   for (j = 1; j<=edges_n; j++){
     cnt[j] += cnt[j-1];
   }
-  for (j=0; j<=edges_n; j++)
+  /*for (j=0; j<=edges_n; j++)
     edges_cnt[j] = cnt[j]; // copia o cnt para edges_cnt
+  */
   for (i=0; i<edges_n; i++) {
     edges[cnt[edges_tmp[i].x]].y = edges_tmp[i].y; // copy end
     edges[cnt[edges_tmp[i].x]++].x = edges_tmp[i].x; // copy beg
   }
   free(edges_tmp);
   free(edges_input);
-
 }
 
 /* ----------------------------------------------------------------------
@@ -105,7 +120,7 @@ void parse_edges(Edge *edges, int edges_n, int *edges_cnt) {
  * will not put repeated nodes in the stack (verify this!!!TODO)
  */
 Stack* init_stack(int nodes_n){
-  Stack *s_struct = (Stack*) malloc(sizeof(Stack));
+  Stack *s_struct = (Stack*) calloc(1,sizeof(Stack));
   s_struct->stack = (int*) malloc(sizeof(int)*(nodes_n+1)); // TODO - why +1
   s_struct->in_stack = (int*) malloc(sizeof(int)*(nodes_n+1));
   s_struct->sp = 0;
@@ -152,7 +167,6 @@ void print_stack(Stack *s) {
  * Returns the index of the first neighbour
  */
 int first_neighbour(int node_id, int* edges_index) {
-  printf("first neighbour index %d\n", edges_index[node_id-1]);
   return edges_index[node_id];
 }
 
@@ -160,10 +174,8 @@ int first_neighbour(int node_id, int* edges_index) {
  * Returns the index of the last neighbour
  */
 int last_neighbour(int node_id, int* edges_index, int nodes_n, int edges_n) {
-  if (node_id == nodes_n) {
-    printf("last neighb of %d NODE_iD = NODES_N\n", node_id);
+  if (node_id == nodes_n)
       return edges_n; // if it is the last node
-  }
   return edges_index[node_id+1];
 }
 
@@ -179,7 +191,7 @@ void tarjan_algorithm(int nodes, int edges,  Node_info *node_info, Stack *stack,
     /*for(int u = 1; u < nodes+1; u++){ // Se calhar posso tirar isto porque os ds ja sao INFINITY
         vertex_array[u]->d = INFINITY;
     }*/
-    for(int u = 1; u < nodes+1; u++){
+    for(int u = 1; u <= nodes; u++){
         if(node_info[u].d == INFINITY){
             tarjan_visit(u, nodes, edges, scc, node_info, stack, edges_index, edges_array);
         }
@@ -246,14 +258,21 @@ int main(){
 
 
     // edges
-    int *edges_index = malloc(sizeof(int)*nodes_n+1); // Array do count
-    Edge *edges = create_edges_array(edges_n);
-    parse_edges(edges, edges_n, edges_index);
-    // TODO verificar edges_index se começa em 1 /!\ TODO
 
+    Edge *edges = create_edges_array(edges_n);
+    parse_edges(edges, edges_n);
     for (int i=0; i<edges_n;i++) {
       printf("%d %d\n", edges[i].x, edges[i].y);
     }
+
+    // TODO verificar edges_index se começa em 1 /!\ TODO
+    int *edges_index = create_edges_index(edges_n, nodes_n, edges);
+    printf("priting endges_index: ");
+    for (int i=1;i<=nodes_n;i++)
+      printf("|%d", edges_index[i]);
+    printf("\n");
+
+
 
     // nodes (starts at 1)
     Node_info *node_info = malloc(sizeof(Node_info)*(nodes_n+1)); // node [d,low]
@@ -262,10 +281,7 @@ int main(){
       node_info[i].low = INFINITY; // set low
     }
 
-    printf("priting endges_index: ");
-    for (int i=1;i<=nodes_n;i++)
-      printf("|%d", edges_index[i]);
-    printf("\n");
+
     // DEBUG Printing de todos os neighbours
     for (int i=1;i<=nodes_n;i++){
       printf("====== Printing neighbours of %d ======\n", i);
@@ -277,7 +293,7 @@ int main(){
       printf("\n");
     }
 
-    tarjan_algorithm(nodes_n, edges_n, node_info, stack, edges_index, edges);
+    //tarjan_algorithm(nodes_n, edges_n, node_info, stack, edges_index, edges);
 
     return 0;
 }
