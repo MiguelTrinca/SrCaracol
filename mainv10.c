@@ -1,9 +1,32 @@
-#include "lib.h"
+//#include "lib.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
 # define min(a,b) (((a)<(b))?(a):(b))
+
+typedef struct vertex{
+    double d;
+    double low;
+    int id;
+} *Vertex;
+
+typedef struct node{
+    Vertex v;
+    struct node *next;
+} Link;
+
+typedef struct int_node{
+    int id;
+    struct int_node *next;
+} Stack;
+
+typedef struct par{
+    int begin;
+    int end;
+} *Par;
+
+
 
 /*Global variables*/
 Link **adj_list; //  Lista de adjacencias (array de links)
@@ -43,7 +66,7 @@ void push(Vertex v){
 Vertex pop(){
     Vertex v;
     Link *old;
-    
+
     if(!is_empty_stack()){
         v = stack->v;
         old = stack;
@@ -51,7 +74,7 @@ Vertex pop(){
         free(old);
 
         int id = v->id;
-        stack_array[id] = 0; 
+        stack_array[id] = 0;
         return v;
     }
     else
@@ -63,7 +86,7 @@ Vertex pop(){
                                 L I S T
 ------------------------------------------------------------------------*/
 void init_list(Link *l){
-    l = NULL; 
+    l = NULL;
 }
 
 int is_empty_list(Link *l){
@@ -95,10 +118,10 @@ Vertex pop_list(Link *l){
 }
 
 void print_list(Link *l){
-    for(Link *x = l; x!= NULL; x=x->next){  
+    for(Link *x = l; x!= NULL; x=x->next){
         printf("Vertice: %d\n", x->v->id);
     }
-    
+
 }
 
 
@@ -131,7 +154,7 @@ void init_Vertex_array(int v){
 }
 
 void add_edge(int begin, int end){
-    Vertex v = vertex_array[end]; 
+    Vertex v = vertex_array[end];
     adj_list[begin] = push_front(adj_list[begin], v);     // Ponho a edge no grafo (lista de adjacenicas)
 }
 
@@ -140,8 +163,8 @@ Vertex create_Vertex(int id){                             //Construo o vertice
     v = (struct vertex *)malloc(sizeof(struct vertex));
     v->id = id;
     v->low = INFINITY;
-    v->d = INFINITY;  
-    return v;  
+    v->d = INFINITY;
+    return v;
 }
 
 /* ----------------------------------------------------------------------
@@ -151,14 +174,14 @@ void tarjan_visit(Vertex v, int nodes, int *scc);
 void tarjan_algorithm(int nodes){
     //printf("estou no trajan\n");
     int scc[nodes+1]; //Este array secundario, guardara os nodes que tenho que mudar
-    //printf("Iniacizei  a scc\n");    
+    //printf("Iniacizei  a scc\n");
     Visisted = 0;
 
     //Percorrer todos os vertices
     for(int u = 1; u < nodes+1; u++){ // Se calhar posso tirar isto porque os ds ja sao INFINITY
-        vertex_array[u]->d = INFINITY; 
+        vertex_array[u]->d = INFINITY;
     }
-    for(int u = 1; u < nodes+1; u++){ 
+    for(int u = 1; u < nodes+1; u++){
         if(vertex_array[u]->d == INFINITY){
             tarjan_visit(vertex_array[u], nodes, scc);
         }
@@ -166,14 +189,14 @@ void tarjan_algorithm(int nodes){
 }
 
 void tarjan_visit(Vertex u, int nodes, int *scc){
-    
+
     int u_id = u->id;
     u->d = Visisted;
     u->low = Visisted;
     Visisted++;
 
     push(u);
-    
+
     for(Link *l = adj_list[u_id]; l!= NULL; l=l->next){  //Percorrer as arestas do vertice u;
         if(l->v->d == INFINITY || in_stack(l->v->id)){
             if(l->v->d == INFINITY){
@@ -188,13 +211,13 @@ void tarjan_visit(Vertex u, int nodes, int *scc){
         int count = 0;  // Serve para ter a certeza que nao saimos do array quando estoua mudar o id dos vertices
         int new_id;     //Guarda o novo id que tenho que mudar para os vertices
         while(v->id != u->id){
-            v = pop(); //Sai todos os vertices que da stact que pertencem a scc       
+            v = pop(); //Sai todos os vertices que da stact que pertencem a scc
             scc[i] = v->id; // Ponho no array;
-            i++; 
-            count++; 
+            i++;
+            count++;
         }
         new_id = v->id;  // Este e o valor que eu tenho que mudar
-        
+
         for(int u = 0; u<count; u++){
             int old_id = scc[u];
             vertex_array[old_id]->id = new_id;
@@ -210,12 +233,11 @@ void tarjan_visit(Vertex u, int nodes, int *scc){
 int compare ( const void *pa, const void *pb ) {
     const int *a = *(const int **)pa;
     const int *b = *(const int **)pb;
-    if(a[0] == b[0])
-        return a[1] - b[1];
-    else
+    if(a[0] == b[0]){
+      return a[1] - b[1];
+    } else
         return a[0] - b[0];
 }
-
 
 /* ----------------------------------------------------------------------
                                 O T H E R
@@ -245,7 +267,7 @@ Par create_Par(int begin, int end){
     p = (struct par*)malloc(sizeof(struct par));
     p->begin = begin;
     p->end = end;
-    return p;  
+    return p;
 }
 
 int in_Par_array(Par *p, Par par, int length){
@@ -267,7 +289,7 @@ void print_output(Vertex *v, int length){
     Tenho que percorrer essa lista e formar edges
         So quero formar se ambos os elementos nao tiverem o mesmo id
         Meto no meu array duplo
-    
+
     qsort do array primeiro
     qsort do array segundo
 
@@ -278,14 +300,14 @@ void print_output(Vertex *v, int length){
     int **output;
     int **output_aux;
     int n_bridges = 0;
-    
+
     output_aux = malloc(edges * sizeof(int*));
 
     int j=0;
     for(int i = 0; i<length; i+=2){
         if(v[i]->id != v[i+1]->id){
             //Adicionar ao output
-            //Nao verifica se ja 
+            //Nao verifica se ja
             output_aux[j] = malloc(2 * sizeof(int));
             output_aux[j][0] = v[i]->id;
             output_aux[j][1] = v[i+1]->id;
@@ -305,26 +327,32 @@ void print_output(Vertex *v, int length){
             output[j][1] = output_aux[j][1];
         }
     }
-    
+    int last_begin=0;
+    int last_end=0;
+
     printf("%d\n%d\n", n_sccs, n_bridges);
     if(n_bridges != 0){
         if(n_bridges != edges){
             qsort(output, n_bridges, sizeof output[0], compare);
-            for(j=0; j<n_bridges; j++)
-                printf("%d %d\n", output[j][0], output[j][1]);        
-        }
-        else{
+            for(j=0; j<n_bridges; j++){
+              if (output[j][0] != last_begin || output[j][1] != last_end) {
+                printf("%d %d\n", output[j][0], output[j][1]);
+                last_begin = output[j][0]; last_end = output[j][1];
+              }
+            }
+        } else {
             qsort(output_aux, edges, sizeof output_aux[0], compare);
-            for(j=0; j<edges; j++)
+            for(j=0; j<edges; j++) {
                 printf("%d %d\n", output_aux[j][0], output_aux[j][1]);
-        }            
+            }
+        }
     }
 }
 /* ----------------------------------------------------------------------
                                  M A I N
 ------------------------------------------------------------------------*/
 int main(){
-    int nodes;  
+    int nodes;
     int edges;
     scanf("%d", &nodes);
     scanf("%d", &edges);
@@ -335,7 +363,7 @@ int main(){
         if (edges == 2){
             int begin, end;
             scanf("%d %d", &begin, &end);
-            scanf("%d %d", &begin, &end);            
+            scanf("%d %d", &begin, &end);
             printf("1\n0\n");
             return 0;
         }
@@ -353,14 +381,14 @@ int main(){
     init_graph(nodes, edges, edges_input);           //Inicializa o grafo
 
     tarjan_algorithm(nodes);
-    
+
     print_output(edges_input, edges*2);
-    
+
     return 0;
 }
 
 /*
 Ja ordena o output mas tenho que ver se ha repetidos.
-O pestana diz que e facil mas nao percebi muito bem a 
+O pestana diz que e facil mas nao percebi muito bem a
 ideia dele.
 */
