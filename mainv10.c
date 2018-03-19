@@ -342,7 +342,10 @@ void print_output(Vertex *v, int length){
         } else {
             qsort(output_aux, edges, sizeof output_aux[0], compare);
             for(j=0; j<edges; j++) {
-                printf("%d %d\n", output_aux[j][0], output_aux[j][1]);
+                if (output[j][0] != last_begin || output[j][1] != last_end) {
+                printf("%d %d\n", output[j][0], output[j][1]);
+                last_begin = output[j][0]; last_end = output[j][1];
+                }
             }
         }
     }
