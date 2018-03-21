@@ -140,7 +140,7 @@ void create_neighbours(int n_edges, int n_nodes){
 
     int id = 1;
     int i;
-    neighbours_array = (int*)calloc(n_nodes+1,sizeof(int));
+    neighbours_array = (int*)calloc(n_nodes+1+1,sizeof(int)); // tinhamos aqui um BUG, falatava alocar um byte
     for(i = 0; i<n_edges; i++){
         if(id == 1){
             neighbours_array[id] = 0;
