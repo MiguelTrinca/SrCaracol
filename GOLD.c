@@ -52,6 +52,15 @@ void init_stack(int V){
     stack_array = (int *)malloc(sizeof(int)*(V+1));
 }
 
+void print_stack() {
+  Stack *s = stack;
+  printf("stack: ");
+  while (s != NULL) {
+    printf("|%d",s->id );
+    s = s->next;
+  } printf("\n");
+}
+
 int is_empty_stack(){
     return (stack == NULL);
 }
@@ -81,6 +90,7 @@ int pop(){
         free(old);
 
         stack_array[id] = 0;
+        /*printf("POPPED %d\n", id);*/
         return id;
     }
     else
@@ -105,7 +115,7 @@ void create_Vertex_array(int n_nodes){
     *       1,2,3,4,5.
     */
     int id;
-    vertex_array = (struct vertex **)malloc(sizeof(struct vertex)*(n_nodes+1));
+    vertex_array = (struct vertex **) malloc(sizeof(struct vertex)*(n_nodes+1));
     for (id = 1; id<n_nodes+1; id++){
         vertex_array[id] = create_Vertex(id);
     }
@@ -138,10 +148,10 @@ void create_neighbours(int n_edges, int n_nodes){
     *       posicao 5 do edges_array.
     */
 
-    int id = 1;
+    /*int id = 1;*/
     int i;
-    neighbours_array = (int*)calloc(n_nodes+1+1,sizeof(int)); // tinhamos aqui um BUG, falatava alocar um byte
-    for(i = 0; i<n_edges; i++){
+    neighbours_array = (int*)calloc(n_nodes+1+1,sizeof(int)); /* tinhamos aqui um BUG, falatava alocar um byte */
+    /*for(i = 0; i<n_edges; i++){
         if(id == 1){
             neighbours_array[id] = 0;
         }
@@ -150,7 +160,14 @@ void create_neighbours(int n_edges, int n_nodes){
             id = edges_array[i][0];
             neighbours_array[id] = i;
         }
-    }
+    }*/
+    /* new version of the cycle */
+
+    for(i=0; i<n_edges;i++)
+      neighbours_array[edges_array[i][0]+1] += 1;
+
+    for(i=1; i<n_nodes+2;i++)
+      neighbours_array[i] += neighbours_array[i-1];
 }
 
 /* ----------------------------------------------------------------------
@@ -239,13 +256,17 @@ void tarjan_algorithm(int n_nodes, int n_edges){
 }
 
 void tarjan_visit(Vertex u, int n_nodes, int n_edges, int *scc){
+  /*printf("visiting %d\n", u->id);*/
+
     int v_id;
     int u_id = u->id;
     u->d = Visited;
     u->low = Visited;
+    /*printf("\t set d %d | low %d\n", u->d, u->low);*/
     Visited++;
 
     push(u_id);
+    /*print_stack();*/
 
     /*
     *   Sempre que comeco uma visita tenho que mudar o tamanho (tam), que
@@ -260,21 +281,28 @@ void tarjan_visit(Vertex u, int n_nodes, int n_edges, int *scc){
     if(u_id == n_nodes){
         tam = n_edges;
     }
+    /*printf("neighbours_array: ");
+    int k;
+    for (k=1; k < n_nodes; k++) {
+      printf("|%d", neighbours_array[k]);
+    } printf("\n");*/
     /*
     *   O primeiro for percorre os vizinhos do vertice u, atraves do neighbours_
     *       _array.
     */
     for(v_id = neighbours_array[u_id]; v_id < tam; v_id++){
+      /*printf("\tLOOPING > %d has neighbour %d\n",u->id, edges_array[v_id][1]);*/
         int v = edges_array[v_id][1];   /*Para facilitar a leitura*/
         if(vertex_array[v]->d == NIL || in_stack(v)){
             if(vertex_array[v]->d == NIL){
                 tarjan_visit(vertex_array[v], n_nodes, n_edges, scc);
             }
             u->low = min(u->low, vertex_array[v]->low);
-
+            /*printf("u->low of %d set to: %d|%d\n", u->id, u->low, u->d);*/
         }
     }
     if(u->d == u->low){
+      /*printf("found component base\n");*/
         int id = 0;
         int i = 0;
         int count = 0;
