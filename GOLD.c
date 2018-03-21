@@ -2,7 +2,7 @@
 *   Versao com o edges_array de inteiros
 *   Versao com stack de inteiros
 *
-*   Problemas: 
+*   Problemas:
 *       Ele esta a fazer mal o Tarjan
 *       Acho que ele nao esta a tirar os repetidos
 */
@@ -12,7 +12,7 @@
 #include <limits.h>
 
 # define min(a,b) (((a)<(b))?(a):(b))
-
+# define NIL -1
 
 /* ----------------------------------------------------------------------
                                 S T R U C T U R E S
@@ -28,12 +28,18 @@ typedef struct int_node{
     struct int_node *next;
 } Stack;
 
+typedef struct edge {
+  int x;
+  int y;
+} Edge;
+
+
 int Visited;
 int n_sccs = 0;
 
 int *stack_array;
 int *neighbours_array;
-int **edges_array; 
+int **edges_array;
 
 Vertex *vertex_array;
 static Stack *stack;
@@ -61,20 +67,20 @@ void push(int id){
     new->next = stack;
     stack = new;
 
-    stack_array[id] = id; 
+    stack_array[id] = id;
 }
 
 int pop(){
     int id;
     Stack *old;
-    
+
     if(!is_empty_stack()){
         id = stack->id;
         old = stack;
         stack = stack->next;
         free(old);
 
-        stack_array[id] = 0; 
+        stack_array[id] = 0;
         return id;
     }
     else
@@ -84,13 +90,13 @@ int pop(){
 /* ----------------------------------------------------------------------
                 C R E A T I O N     O F     A R R A Y S
 ------------------------------------------------------------------------*/
-Vertex create_Vertex(int id){                 
+Vertex create_Vertex(int id){
     Vertex v;
     v = (struct vertex *)malloc(sizeof(struct vertex));
     v->id = id;
-    v->low = INT_MAX;
-    v->d = INT_MAX;  
-    return v;  
+    v->low = NIL;
+    v->d = NIL;
+    return v;
 }
 
 void create_Vertex_array(int n_nodes){
@@ -100,7 +106,7 @@ void create_Vertex_array(int n_nodes){
     */
     int id;
     vertex_array = (struct vertex **)malloc(sizeof(struct vertex)*(n_nodes+1));
-    for (id = 1; id<n_nodes+1; id++){       
+    for (id = 1; id<n_nodes+1; id++){
         vertex_array[id] = create_Vertex(id);
     }
 }
@@ -111,7 +117,7 @@ void create_edges_array(int n_edges){
     edges_array =  malloc(sizeof(int*)*n_edges);
     for (i = 0; i<n_edges; i++){
         scanf("%d %d", &begin, &end);
-        edges_array[i] = malloc(sizeof(int)*2); 
+        edges_array[i] = malloc(sizeof(int)*2);
         edges_array[i][0] = begin;
         edges_array[i][1] = end;
     }
@@ -120,21 +126,21 @@ void create_edges_array(int n_edges){
 void create_neighbours(int n_edges, int n_nodes){
     /*
     *   O neighbours_array e um array que guarda a posicao inicial de cada vertice,
-    *       no edges_array. Como o edges_array esta ordenado sabemos exatamente 
-    *       onde estao os vizinhos de um certo vertice. Sabemos tambem que o 
+    *       no edges_array. Como o edges_array esta ordenado sabemos exatamente
+    *       onde estao os vizinhos de um certo vertice. Sabemos tambem que o
     *           tamanho, ou o grau (degree), e a posicao seguinte no neighbours_
     *           _array. Por exemplo:
     *              edges_array = [[1,2],[1,3],[1,4],[2,4],[3,4],[4,2]]
     *              neighbours_array = [0,0,3,4,5].
     *
     *   Cada posicao do neighbours_array corresponde ao vertice, no mesmo exemplo,
-    *       o vertice 1 comeca na posicao 0 do edges_array e o vertice 4 comeca na 
+    *       o vertice 1 comeca na posicao 0 do edges_array e o vertice 4 comeca na
     *       posicao 5 do edges_array.
     */
 
     int id = 1;
     int i;
-    neighbours_array = (int*)malloc((sizeof(int)*n_nodes + 1));
+    neighbours_array = (int*)calloc(n_nodes+1,sizeof(int));
     for(i = 0; i<n_edges; i++){
         if(id == 1){
             neighbours_array[id] = 0;
@@ -175,7 +181,7 @@ void change_ids(int n_edges){
 
 void print_output(int n_edges){
     /*
-    *   Criamos o array edges_array_aux que vai ter o output segundo as seguintes 
+    *   Criamos o array edges_array_aux que vai ter o output segundo as seguintes
     *       normas:
     *           1) Nao ha Begins e Ends repetidos, ou seja, [[1,1], [4,4]]
     *           2) Nao pode haver edges repetidos, ou seja, [[1,2],[1,2]]
@@ -187,11 +193,11 @@ void print_output(int n_edges){
     int j = 0;
     int i;
 
-    edges_array_aux =  malloc(sizeof(int*)*n_edges);
+    edges_array_aux =  calloc(n_edges,sizeof(int*));
     for(i = 0; i<n_edges; i++){
         if(edges_array[i][0] != edges_array[i][1]){
             if (edges_array[i][0] != last_begin || edges_array[i][1] != last_end) {
-                edges_array_aux[j] = calloc(2,sizeof(int)); 
+                edges_array_aux[j] = calloc(2,sizeof(int));
                 edges_array_aux[j][0] = edges_array[i][0];
                 edges_array_aux[j][1] = edges_array[i][1];
                 last_begin = edges_array[i][0]; last_end = edges_array[i][1];
@@ -200,10 +206,10 @@ void print_output(int n_edges){
             }
         }
     }
-    printf("%d\n%d\n", n_sccs, n_bridges);  
-    if(n_bridges != 0){      
+    printf("%d\n%d\n", n_sccs, n_bridges);
+    if(n_bridges != 0){
         for(i = 0; i<n_bridges; i++){
-            printf("%d %d\n", edges_array_aux[i][0], edges_array_aux[i][1]);            
+            printf("%d %d\n", edges_array_aux[i][0], edges_array_aux[i][1]);
         }
     }
 }
@@ -220,13 +226,13 @@ void tarjan_algorithm(int n_nodes, int n_edges){
     int scc[n_nodes+1];
     Visited = 0;
 
-    /* 
+    /*
     *   Nota: tirei daqui o for que mete os d e lows a infinito porque,
     *       quando construimos os vertices ja o fazemos.
     */
 
     for(u = 1; u < n_nodes+1; u++){
-        if(vertex_array[u]->d == INT_MAX){
+        if(vertex_array[u]->d == NIL){
             tarjan_visit(vertex_array[u], n_nodes, n_edges, scc);
         }
     }
@@ -238,19 +244,19 @@ void tarjan_visit(Vertex u, int n_nodes, int n_edges, int *scc){
     u->d = Visited;
     u->low = Visited;
     Visited++;
-    
-    push(u_id);    
+
+    push(u_id);
 
     /*
-    *   Sempre que comeco uma visita tenho que mudar o tamanho (tam), que 
+    *   Sempre que comeco uma visita tenho que mudar o tamanho (tam), que
     *       corresponde a proxima posicao no neighbours_array.
     *   Existe o caso especial que quando o u_id == n_nodes, significa que estou
     *       na ultima posicao do neighbours_array, logo nao consigo aceder a
-    *       neighbours_array[u_id + 1]. Deste modo, sabemos que o tamanho que 
+    *       neighbours_array[u_id + 1]. Deste modo, sabemos que o tamanho que
     *       falta percorrer no edges_array e simplesmente o n_edges.
     */
 
-    int tam = neighbours_array[u_id+1]; 
+    int tam = neighbours_array[u_id+1];
     if(u_id == n_nodes){
         tam = n_edges;
     }
@@ -259,13 +265,13 @@ void tarjan_visit(Vertex u, int n_nodes, int n_edges, int *scc){
     *       _array.
     */
     for(v_id = neighbours_array[u_id]; v_id < tam; v_id++){
-        int v = edges_array[v_id][1];   /*Para facilitar a leitura*/ 
-        if(vertex_array[v]->d == INT_MAX || in_stack(v)){
-            if(vertex_array[v]->d == INT_MAX){
+        int v = edges_array[v_id][1];   /*Para facilitar a leitura*/
+        if(vertex_array[v]->d == NIL || in_stack(v)){
+            if(vertex_array[v]->d == NIL){
                 tarjan_visit(vertex_array[v], n_nodes, n_edges, scc);
             }
             u->low = min(u->low, vertex_array[v]->low);
-            
+
         }
     }
     if(u->d == u->low){
@@ -285,11 +291,11 @@ void tarjan_visit(Vertex u, int n_nodes, int n_edges, int *scc){
         }
 
         /*
-        *   Nao gosto deste for mas nao sei porque ele em certos casos, nao estava 
+        *   Nao gosto deste for mas nao sei porque ele em certos casos, nao estava
         *       a dar o minimo id. Por isso percorro o scc[i], para ter a certeza
         *       que o valor e o minimo.
         */
-        
+
         int min_id = n_nodes;
         for (i = 0; i<count; i++){
             if (scc[i] < min_id){
@@ -325,7 +331,7 @@ int main(){
 
     /*Cria os vertices todos*/
     create_Vertex_array(n_nodes);
-    
+
     /*Cria os edges e organiza [[1,2],[2,3],[3,1]] por exemplo*/
     create_edges_array(n_edges);
     qsort(edges_array, n_edges, sizeof edges_array[0], compare);
@@ -339,10 +345,9 @@ int main(){
     /*Alterar o input para quase_output*/
     change_ids(n_edges);
     qsort(edges_array, n_edges, sizeof edges_array[0], compare);
-    
+
     /*Impressao do output*/
     print_output(n_edges);
 
     return 0;
 }
-
