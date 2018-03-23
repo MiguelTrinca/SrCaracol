@@ -240,7 +240,7 @@ void tarjan_algorithm(int n_nodes, int n_edges){
     init_stack(n_nodes);
 
     int u;
-    int scc[n_nodes+1];
+    int *scc = calloc(n_nodes+1,sizeof(int));
     Visited = 0;
 
     /*
