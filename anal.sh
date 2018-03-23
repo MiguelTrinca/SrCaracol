@@ -15,17 +15,17 @@ seed=1
 TMP_FILE=out.massif
 #./gerador $pontos $rotas $subredes $min $max $seed
 
-test(){
-  pontos=$(($difficulty*$difficulty))
-  rotas=$difficulty
-  subredes=$difficulty/10
+test_speed(){
+  pontos=$difficulty
+  rotas=$(($difficulty*$difficulty))
+  subredes=$difficulty/5
   min=1
   max=$difficulty
   seed=1
   \time --format="%U" ./gerador $pontos $rotas $subredes $min $max $seed | ./a.out > /dev/null
 }
 
-test_speed(){
+test_mem(){
   pontos=$(($difficulty*$difficulty))
   rotas=$difficulty
   subredes=$difficulty/10
@@ -37,11 +37,10 @@ test_speed(){
   grep mem_heap_B "$TMP_FILE" | sed -e 's/mem_heap_B=\(.*\)/\1/' | sort -g | tail -n 1
 }
 
-
 difficulty=10
 while [ $difficulty -le 3000 ]
 do
-  echo -ne "$difficulty,"
+  #echo -ne "$difficulty,"
   #test
   test_speed
   difficulty=$(( $difficulty + 100 ))
