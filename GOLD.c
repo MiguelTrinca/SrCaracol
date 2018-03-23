@@ -215,7 +215,7 @@ void print_output(int n_edges){
                 n_bridges++;
             }
         }
-    }*
+    }*/
 
     printf("%d\n%d\n", n_sccs, n_bridges);
     if(n_bridges != 0){
