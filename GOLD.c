@@ -1,11 +1,8 @@
 /*
-*   Versao com o edges_array de inteiros
-*   Versao com stack de inteiros
-*
-*   Problemas:
-*       Ele esta a fazer mal o Tarjan
-*       Acho que ele nao esta a tirar os repetidos
-*/
+ * Projeto1 ASA 2017/2019
+ * Miguel Trinca
+ * Francisco Rocha
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,16 +46,7 @@ static Stack *stack;
 ------------------------------------------------------------------------*/
 void init_stack(int V){
     stack = NULL;
-    stack_array = (int *)malloc(sizeof(int)*(V+1));
-}
-
-void print_stack() {
-  Stack *s = stack;
-  printf("stack: ");
-  while (s != NULL) {
-    printf("|%d",s->id );
-    s = s->next;
-  } printf("\n");
+    stack_array = (int *) malloc(sizeof(int)*(V+1));
 }
 
 int is_empty_stack(){
@@ -75,7 +63,6 @@ void push(int id){
     new->id = id;
     new->next = stack;
     stack = new;
-
     stack_array[id] = id;
 }
 
@@ -90,7 +77,6 @@ int pop(){
         free(old);
 
         stack_array[id] = 0;
-        /*printf("POPPED %d\n", id);*/
         return id;
     }
     else
@@ -133,6 +119,13 @@ void create_edges_array(int n_edges){
     }
 }
 
+void free_edges_array(int **edges_array_aux, int n_edges) {
+  int i;
+  for (i = 0; i<n_edges; i++)
+    free(edges_array[i]);
+  free(edges_array);
+}
+
 void create_neighbours(int n_edges, int n_nodes){
     /*
     *   O neighbours_array e um array que guarda a posicao inicial de cada vertice,
@@ -148,20 +141,8 @@ void create_neighbours(int n_edges, int n_nodes){
     *       posicao 5 do edges_array.
     */
 
-    /*int id = 1;*/
     int i;
     neighbours_array = (int*)calloc(n_nodes+1+1,sizeof(int)); /* tinhamos aqui um BUG, falatava alocar um byte */
-    /*for(i = 0; i<n_edges; i++){
-        if(id == 1){
-            neighbours_array[id] = 0;
-        }
-
-        if (id != edges_array[i][0]){
-            id = edges_array[i][0];
-            neighbours_array[id] = i;
-        }
-    }*/
-    /* new version of the cycle */
 
     for(i=0; i<n_edges;i++)
       neighbours_array[edges_array[i][0]+1] += 1;
@@ -223,6 +204,19 @@ void print_output(int n_edges){
             }
         }
     }
+    /* TRINCA, isto é mais efficiente mas da uma wrong answer, ve la se percebes onde está o erro*/
+    /*for(i = 0; i<n_edges; i++){
+        if(edges_array[i][0] != edges_array[i][1]){
+            if (edges_array[i][0] != last_begin || edges_array[i][1] != last_end) {
+                last_begin = edges_array[i][0];
+                last_end = edges_array[i][1];
+                edges_array[n_bridges][0] = last_begin;
+                edges_array[n_bridges][1] = last_end;
+                n_bridges++;
+            }
+        }
+    }*
+
     printf("%d\n%d\n", n_sccs, n_bridges);
     if(n_bridges != 0){
         for(i = 0; i<n_bridges; i++){
@@ -253,20 +247,19 @@ void tarjan_algorithm(int n_nodes, int n_edges){
             tarjan_visit(vertex_array[u], n_nodes, n_edges, scc);
         }
     }
+
+    /* freeing scc */
+    free(scc);
 }
 
 void tarjan_visit(Vertex u, int n_nodes, int n_edges, int *scc){
-  /*printf("visiting %d\n", u->id);*/
-
     int v_id;
     int u_id = u->id;
     u->d = Visited;
     u->low = Visited;
-    /*printf("\t set d %d | low %d\n", u->d, u->low);*/
     Visited++;
 
     push(u_id);
-    /*print_stack();*/
 
     /*
     *   Sempre que comeco uma visita tenho que mudar o tamanho (tam), que
@@ -281,11 +274,7 @@ void tarjan_visit(Vertex u, int n_nodes, int n_edges, int *scc){
     if(u_id == n_nodes){
         tam = n_edges;
     }
-    /*printf("neighbours_array: ");
-    int k;
-    for (k=1; k < n_nodes; k++) {
-      printf("|%d", neighbours_array[k]);
-    } printf("\n");*/
+
     /*
     *   O primeiro for percorre os vizinhos do vertice u, atraves do neighbours_
     *       _array.
@@ -298,11 +287,9 @@ void tarjan_visit(Vertex u, int n_nodes, int n_edges, int *scc){
                 tarjan_visit(vertex_array[v], n_nodes, n_edges, scc);
             }
             u->low = min(u->low, vertex_array[v]->low);
-            /*printf("u->low of %d set to: %d|%d\n", u->id, u->low, u->d);*/
         }
     }
     if(u->d == u->low){
-      /*printf("found component base\n");*/
         int id = 0;
         int i = 0;
         int count = 0;
@@ -310,7 +297,6 @@ void tarjan_visit(Vertex u, int n_nodes, int n_edges, int *scc){
         /*
         *   O while vai tirando os ids da stack ate serem iguai a raiz da scc
         */
-
         while(id != u_id){
             id = pop();
             scc[i] = id;
@@ -376,6 +362,8 @@ int main(){
 
     /*Impressao do output*/
     print_output(n_edges);
+
+    free_edges_array(edges_array, n_edges);
 
     return 0;
 }
